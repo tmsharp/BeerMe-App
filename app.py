@@ -43,8 +43,18 @@ app.layout = html.Div([
     # url
     dcc.Location(id='url', refresh=False),
 
-
    html.Div(className = 'container my-4', children =[
+    #    # username section
+    #    html.Div(className='card', children=[
+    #        html.Div(className='col-lg-5 m-4', children=[
+    #             dcc.Dropdown(
+    #                 id = 'username-selection-dropdown',
+    #                 options=username_options(),
+    #                 multi = False
+    #             )
+    #        ]),
+    #     ]),
+        # search section
         html.Div(id='search-section', className='card', children = [
             html.Div(className='card-body', children = [
                 html.H2(className='card-title text-center', children = "Find My Beer"),
@@ -83,7 +93,10 @@ app.layout = html.Div([
                 [Input('search-button', 'n_clicks')],
                 [State('beer-selection-dropdown', 'value')])
 def display_beer_loader(n_clicks, value):
-    if n_clicks != None and value != None and value != []:
+    if value != None:
+        if len(value) == 1:
+            return {'display': 'none'}
+    elif n_clicks != None and value != None and value != []:
         time.sleep(0.25)
         return {'display': 'block'}
     else:
@@ -94,6 +107,10 @@ def display_beer_loader(n_clicks, value):
                 [State('beer-selection-dropdown', 'value')])
 def display_beer_loader(n_clicks, value):
 
+    if value != None:
+        if len(value) == 1:
+            return "Please select more than one beer!"
+
     if n_clicks != None and value != None and value != []:
         
         features = ['ABV', 'IBU', 'global_rating']
@@ -101,7 +118,7 @@ def display_beer_loader(n_clicks, value):
         query = """SELECT * FROM user_extract 
                     WHERE beer_name IN {}""".format(tuple(value))
 
-        df = import_table(db_path=config_params['DATABASE_PATH'], query=query)
+        df = import_table('data/beer.db', query=query)
         df = df[~df.duplicated()]
         df = impute_na(df, features=features)
 
