@@ -2,12 +2,13 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html 
 from dash.dependencies import Input, Output, State
-from flask_sqlalchemy import SQLAlchemy
+import pickle
 import numpy as np
 
 from app import app
-
 from util import *
+
+print(app.layout)
 
 layout = html.Div(className = 'container my-4', children =[
     
