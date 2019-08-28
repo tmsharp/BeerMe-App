@@ -8,8 +8,6 @@ import numpy as np
 from app import app
 from util import *
 
-print(app.layout)
-
 layout = html.Div(className = 'container my-4', children =[
     
 #    # username section

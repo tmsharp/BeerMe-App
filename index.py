@@ -8,7 +8,7 @@ from dash.dependencies import Input, Output, State
 import numpy as np
 
 from app import app, server
-from tabs import me
+from tabs import me, content_based_filtering
 from util import *
 
 # Layout
@@ -58,7 +58,7 @@ def tab_selection(tab):
               [Input('url', 'pathname')])
 def display_page(pathname):
     if pathname == '/cbf':
-        pass
+        return content_based_filtering.layout
     else:
         return me.layout
 
