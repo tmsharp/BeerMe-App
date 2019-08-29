@@ -20,6 +20,7 @@ app.layout = html.Div([
               integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm",
               crossOrigin="anonymous"),
     html.Link(href='/assets/css/main.css', rel='stylesheet'),
+    html.Link(href='/assets/css/loadwheel.css', rel='stylesheet'),
     
     # url
     dcc.Location(id='url', refresh=False),
