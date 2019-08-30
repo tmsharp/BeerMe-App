@@ -68,7 +68,7 @@ def convert_categorical(df,
         
     return(df) 
     
-def outlier_analysis(df, features = ['ABV', 'global_rating', 'user_rating', 'IBU']):
+def outlier_analysis(df, features, outlier_threshold=5.0):
     # c. flag outliers
     print('\n')
     print("1. NA Count...")
@@ -76,6 +76,7 @@ def outlier_analysis(df, features = ['ABV', 'global_rating', 'user_rating', 'IBU
     
     print('\n')
     print('2. Finding IQR outliers...')
+    features_to_remove = []
     for feature in features:
         try:
             q1 = df[feature].quantile(.25)
@@ -87,12 +88,22 @@ def outlier_analysis(df, features = ['ABV', 'global_rating', 'user_rating', 'IBU
             print("FEATURE {}".format(feature))
             print("num of outliers = {:,d}".format(len(outliers)))
             print("% of outliers = {:.2f}%".format(100*len(outliers)/len(df)))
+
+            # store feature for outlier removal if necessary
+            if 100*len(outliers)/len(df) > outlier_threshold:
+                userInput = input("Remove outliers? (Y/N)")
+                while userInput != "Y" and userInput != "N":
+                    userInput = input("Remove outliers? (Y/N)")
+                if userInput == "Y":
+                    features_to_remove += [feature]
+                elif userInput == "N":
+                    pass
             print("\n")
             
         except TypeError:
             print("FEATURE {}".format(feature))
             print("ANALYZING ALL NON-NA VALUES")
-            
+
             non_nas = df[~df[feature].isna()][feature].astype(float)
             q1 = non_nas.quantile(.25)
             q3 = non_nas.quantile(.75)
@@ -101,8 +112,23 @@ def outlier_analysis(df, features = ['ABV', 'global_rating', 'user_rating', 'IBU
             outliers = non_nas[~non_outlier_mask]
             print("num of outliers = {:,d}".format(len(outliers)))
             print("% of outliers = {:.2f}%".format(100*len(outliers)/len(non_nas)))
-        
-        return df
+
+            # store feature for outlier removal if necessary 
+            if 100*len(outliers)/len(non_nas) > outlier_threshold:
+                userInput = input("Remove outliers? (Y/N)")
+                while userInput != "Y" and userInput != "N":
+                    userInput = input("Remove outliers? (Y/N)")
+                if userInput == "Y":
+                    features_to_remove += [feature]
+                elif userInput == "N":
+                    pass
+            print("\n")
+
+    # remove outliers 
+    print("Removing outliers from the following features:", features_to_remove)
+    df = remove_outliers(df, features_to_remove)
+
+    return df
 
 def remove_outliers(df, features = ['ABV', 'global_rating', 'user_rating', 'IBU']):
     for feature in features:

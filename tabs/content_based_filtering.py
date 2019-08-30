@@ -145,7 +145,20 @@ def predict_beer_rating(n_clicks, beer):
     
     drop_cols =['username', 'beer_name', 'brewery']
     if features == 'simple':
-        query = "SELECT ABV, IBU, global_rating FROM user_extract WHERE beer_name = '{}'".format(beer[0])
+        query = "SELECT ABV, IBU, global_rating FROM user_extract WHERE beer_name = '{}'".format(beer)
+        df = import_table(db_path, query)
+        df = impute_na(df, features = ['ABV', 'global_rating', 'IBU'])
+
+        if df['IBU'].isna().any():
+            ibu_df = import_table(db_path, "SELECT IBU FROM user_extract")
+            ibu_df = impute_na(ibu_df, features = ['IBU'])
+            df['IBU'] = df['IBU'].astype(float)
+            ibu_mean = ibu_df['IBU'].mean()
+
+
+        df['IBU'] = ibu_mean 
+
+        print(df)
     
     elif features == 'cat-encoding':
         user_df = cat_encoding(df, 'beer_description', drop_cols)
@@ -154,9 +167,11 @@ def predict_beer_rating(n_clicks, beer):
     elif features == 'tfidf-vect':
         user_df = tfidf_vectorizer(df,'beer_description', drop_cols)
     
-    df = import_table(db_path, query)
     df['IBU'] = df['IBU'].astype(float)
     df['global_rating'] = df['global_rating'].mean()
 
-    print(df)
+    beer_array = np.array(df.iloc[0:,])
+    print(beer_array)
+    prediction = model.predict(beer_array)
+    print(prediction)
     
