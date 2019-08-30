@@ -101,30 +101,27 @@ def display_beer_loader(n_clicks, value):
                 [Input('model-button-cbf', 'n_clicks')],
                 [State('username-selection-dropdown-cbf', 'value'),
                  State('feature-selection-dropdown-cbf', 'value')])
-def build_model(n_clicks, user_of_interest, features):
+def build_model(n_clicks, user_of_interest, feature_selection):
 
     if n_clicks != None:
        
-        df = import_table(db_path, query = "SELECT username, beer_name, beer_description, brewery, ABV, IBU, global_rating, user_rating FROM user_extract WHERE username = '{}'".format(user_of_interest))
-        df['IBU'] = df['IBU'].astype(float)
-        df = impute_na(df)
-        df = remove_outliers(df)
+        df = import_table(db_path, query = "SELECT * FROM prepped_data WHERE username = '{}'".format(user_of_interest))
     
         drop_cols =['username', 'beer_name', 'brewery']
-        if features == 'simple':
+        if feature_selection == 'simple':
             user_df = df[df['username']==user_of_interest].drop(drop_cols + ['beer_description'], axis=1, inplace=False)
-        elif features == 'cat-encoding':
+        elif feature_selection == 'cat-encoding':
             user_df = cat_encoding(df, 'beer_description', drop_cols)
-        elif features == 'count-vect':
+        elif feature_selection == 'count-vect':
             user_df = count_vectorizer(df,'beer_description', drop_cols)
-        elif features == 'tfidf-vect':
+        elif feature_selection == 'tfidf-vect':
             user_df = tfidf_vectorizer(df,'beer_description', drop_cols)
 
-        model, mae, quarter, half = run_model(user_df, user_of_interest, 'user_rating')
+        model, mae, quarter, half = run_model(user_df, 'user_rating')
 
         d={}
         d['model'] = model
-        d['features'] = features
+        d['feature_selection'] = feature_selection
 
         with open('model.pkl', 'wb') as file:
             pickle.dump(d, file)
@@ -140,38 +137,27 @@ def predict_beer_rating(n_clicks, beer):
         with open('model.pkl', 'rb') as file:
             d = pickle.load(file)
             model = d['model']
-            features = d['features']
+            feature_selection = d['feature_selection']
     
     
-    drop_cols =['username', 'beer_name', 'brewery']
-    if features == 'simple':
-        query = "SELECT ABV, IBU, global_rating FROM user_extract WHERE beer_name = '{}'".format(beer)
-        df = import_table(db_path, query)
-        df = impute_na(df, features = ['ABV', 'global_rating', 'IBU'])
+        drop_cols =['username', 'beer_name', 'brewery']
+        if feature_selection == 'simple':
+            query = "SELECT ABV, IBU, global_rating FROM prepped_data WHERE beer_name = '{}'".format(beer)
+            beer_df = import_table(db_path, query, remove_dups=False)
 
-        if df['IBU'].isna().any():
-            ibu_df = import_table(db_path, "SELECT IBU FROM user_extract")
-            ibu_df = impute_na(ibu_df, features = ['IBU'])
-            df['IBU'] = df['IBU'].astype(float)
-            ibu_mean = ibu_df['IBU'].mean()
+            print(beer_df)
+            beer_df['global_rating'] = beer_df['global_rating'].mean()
 
+            beer_df = beer_df[~beer_df.duplicated()]
+            print(beer_df)
+            prediction = model.predict(beer_df)
+            print(prediction)
 
-        df['IBU'] = ibu_mean 
+    # elif feature_selection == 'cat-encoding':
+    #     user_df = cat_encoding(df, 'beer_description', drop_cols)
+    # elif feature_selection == 'count-vect':
+    #     user_df = count_vectorizer(df,'beer_description', drop_cols)
+    # elif feature_selection == 'tfidf-vect':
+    #     user_df = tfidf_vectorizer(df,'beer_description', drop_cols)
 
-        print(df)
-    
-    elif features == 'cat-encoding':
-        user_df = cat_encoding(df, 'beer_description', drop_cols)
-    elif features == 'count-vect':
-        user_df = count_vectorizer(df,'beer_description', drop_cols)
-    elif features == 'tfidf-vect':
-        user_df = tfidf_vectorizer(df,'beer_description', drop_cols)
-    
-    df['IBU'] = df['IBU'].astype(float)
-    df['global_rating'] = df['global_rating'].mean()
-
-    beer_array = np.array(df.iloc[0:,])
-    print(beer_array)
-    prediction = model.predict(beer_array)
-    print(prediction)
-    
+        return "We predict that your rating for this beer will be {:.2f}".format(prediction[0])

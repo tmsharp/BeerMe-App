@@ -6,7 +6,7 @@ db_path = 'data/beer.db'
 
 def username_options(database_path=db_path):
 
-    query = "SELECT DISTINCT username FROM user_extract ORDER BY username"
+    query = "SELECT DISTINCT username FROM prepped_data ORDER BY username"
     
     with sqlite3.connect(database_path) as conn:
         usernames = list(pd.read_sql(query, conn)['username'])
@@ -18,7 +18,7 @@ def username_options(database_path=db_path):
 
 def beer_options(database_path=db_path):
     print("NOW")
-    query = "SELECT DISTINCT beer_name FROM user_extract ORDER BY beer_name"
+    query = "SELECT DISTINCT beer_name FROM prepped_data ORDER BY beer_name"
     with sqlite3.connect(database_path) as conn:
         beers = list(pd.read_sql(query,conn)['beer_name'])
     print("now")
@@ -292,27 +292,32 @@ def tfidf_vectorizer(df, vectoring_col, drop_cols):
 
 ## models
 # CBF 
-def run_model(df, user_of_interest, target, rand_state=12):
-    
-    user_df = df
+def run_model(user_df, target, rand_state=12):
         
-    features = list(df.columns[df.columns != target])
+    features = list(user_df.columns[user_df.columns != target])
     print("FEATURES ", features[:10])
     print("TARGET ", target)
   
     from sklearn.model_selection import train_test_split
-    X_train, X_test, y_train, y_test = train_test_split(df[features], user_df[target], random_state=rand_state)
-    from sklearn.linear_model import LassoCV
-    lassocv = LassoCV(fit_intercept=True, normalize=True, cv=5, random_state=rand_state)
-    lassocv.fit(X_train, y_train)
+    X_train, X_test, y_train, y_test = train_test_split(user_df[features], user_df[target], test_size=0.2, random_state=rand_state)
+    
+    # gridsearch CV 
     from sklearn.linear_model import Lasso
-    lasso = Lasso(alpha=lassocv.alpha_,fit_intercept=True, normalize=True, random_state=rand_state)
-    lasso.fit(X_train, y_train)
+    from sklearn.model_selection import GridSearchCV
+
+    param_space = {'alpha': np.linspace(0.001, 1.0),
+                    'fit_intercept': [True],
+                    'normalize': [True]}
+
+    lasso = Lasso()
+    gscv = GridSearchCV(lasso, param_space, cv=5, scoring='neg_mean_absolute_error', refit=True)
+    gscv.fit(X_train, y_train)
     
-    coef_dropped_perc = 100*np.sum(lasso.coef_ == 0) / len(lasso.coef_)
-    print("Percentage of estimators dropped = {:.2f} %".format(coef_dropped_perc))
-    
-    preds = lasso.predict(X_test)
+    # get best model 
+    best_model = gscv.best_estimator_
+    preds = best_model.predict(X_test)
+
+    # evaluate performance
     error_list = preds - y_test
     mse = np.mean(np.array(error_list)**2)
     mae = np.absolute(error_list).mean()
@@ -322,8 +327,11 @@ def run_model(df, user_of_interest, target, rand_state=12):
     print("MAE = {:.2f}".format(mae))
     print("Errors within 0.25 = {:.2f} %".format(quarter_error_perc))
     print("Errors within 0.50 = {:.2f} %".format(half_error_perc))
+
+    # fit best model over all data 
+    best_model.fit(user_df[features], user_df[target])
     
-    return lasso, mae, quarter_error_perc, half_error_perc
+    return best_model, mae, quarter_error_perc, half_error_perc
 
 # hybrid
 def hybrid(df, user_of_interest, target):
