@@ -53,7 +53,7 @@ layout = html.Div(className = 'container my-4', children =[
             html.H2(className='card-title text-center', children = "Find My Beer"),
             html.Div(className='card-text text-center', children = [
                     """
-                    Select up to 5 beers and our algorithm will predict which beer you should drink!
+                    Select a beer and our algorithm will predict your rating!
                     """
             ]),
             html.Div(className='row justify-content-center', children=[
