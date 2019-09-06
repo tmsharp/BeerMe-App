@@ -256,15 +256,14 @@ def transform_features_target(df, features, target):
 ### Modeling
 ######################################################  
 ## feature selection
-def cat_encoding(df, encoding_col, drop_cols):
+def cat_encoding(df, encoding_col):
 
     df = convert_categorical(df, [encoding_col])
     df.drop(encoding_col, axis=1, inplace=True)
-    df.drop(drop_cols, axis=1, inplace=True)
     
     return df
 
-def count_vectorizer(df, vectoring_col, drop_cols):
+def count_vectorizer(df, vectoring_col):
 
     from sklearn.feature_extraction.text import CountVectorizer
     vect = CountVectorizer()
@@ -273,11 +272,10 @@ def count_vectorizer(df, vectoring_col, drop_cols):
     df = pd.concat([df.reset_index(drop=True), tfidf_df], axis=1)
     
     df.drop(vectoring_col, axis=1, inplace=True)
-    df.drop(drop_cols, axis=1, inplace=True)
     
     return df
 
-def tfidf_vectorizer(df, vectoring_col, drop_cols):
+def tfidf_vectorizer(df, vectoring_col):
     
     from sklearn.feature_extraction.text import TfidfVectorizer
     vect = TfidfVectorizer()
@@ -286,13 +284,12 @@ def tfidf_vectorizer(df, vectoring_col, drop_cols):
     df = pd.concat([df.reset_index(drop=True), tfidf_df], axis=1)
     
     df.drop(vectoring_col, axis=1, inplace=True)
-    df.drop(drop_cols, axis=1, inplace=True)
     
     return df
 
 ## models
 # CBF 
-def run_model(user_df, target, rand_state=12):
+def cbf(user_df, target, rand_state=12):
         
     features = list(user_df.columns[user_df.columns != target])
     print("FEATURES ", features[:10])
@@ -332,6 +329,38 @@ def run_model(user_df, target, rand_state=12):
     best_model.fit(user_df[features], user_df[target])
     
     return best_model, mae, quarter_error_perc, half_error_perc
+
+
+# semi-coldstart - collaborative filtering
+def collaborative_filtering(df, user_of_interest):
+    try:
+        df.drop('nearest_neighbor_rank', axis=1, inplace=True)
+    except:
+        pass
+    df = COSINE_STEP(df, user_of_interest)
+    beer_list = list(df[df['username']=='tsharp93']['beer_name'])
+    estimated_rating_list = []
+    error_list = []
+    for beer in beer_list:
+        try:
+            estimated_rating = df[ (df.sort_values('nearest_neighbor_rank')['beer_name'] == beer) & (df['username']!=user_of_interest) ]['user_rating'].iloc[0]
+            estimated_rating_list.append(estimated_rating)
+
+            user_rating = df[(df['username']=='tsharp93') & (df['beer_name']==beer)]['user_rating'].iloc[0].astype(float)
+            error_list.append(estimated_rating-user_rating)
+        except IndexError:
+            print("SKIPPING:", beer)
+    mse = np.mean(np.array(error_list)**2)
+    mae = np.absolute(error_list).mean()
+    quarter_error_perc = 100 * np.sum(np.absolute(error_list) < 0.25) / len(error_list)
+    half_error_perc = 100 * np.sum(np.absolute(error_list) < 0.50) / len(error_list)
+
+    print("MSE = {:.2f}".format(mse))
+    print("MAE = {:.2f}".format(mae))
+    print("Errors within 0.25 = {:.2f} %".format(quarter_error_perc))
+    print("Errors within 0.50 = {:.2f} %".format(half_error_perc))
+    
+    return mae, quarter_error_perc, half_error_perc 
 
 # hybrid
 def hybrid(df, user_of_interest, target):

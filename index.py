@@ -8,7 +8,7 @@ from dash.dependencies import Input, Output, State
 import numpy as np
 
 from app import app, server
-from tabs import me, content_based_filtering
+from tabs import content_based_filtering
 from util import *
 
 # Layout
@@ -27,7 +27,7 @@ app.layout = html.Div([
 
     # tabs
     dcc.Tabs(id="tabs", value='me', children=[
-        dcc.Tab(label='Me', value='me'),
+        # dcc.Tab(label='Me', value='me'),
         dcc.Tab(label='Content Based Filtering', value='cbf'),
     ]),
 
@@ -61,7 +61,7 @@ def display_page(pathname):
     if pathname == '/cbf':
         return content_based_filtering.layout
     else:
-        return me.layout
+        return content_based_filtering.layout
 
 
 ## run
