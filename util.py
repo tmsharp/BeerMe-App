@@ -226,7 +226,7 @@ def merge_nearest_neighobr_rank(df, neighbor_rank):
     return(df)
 
 
-def COSINE_STEP(df, user_of_reference='tsharp93'):
+def COSINE_STEP(df, user_of_reference):
     ui_matrix = create_ui_matrix(df)
     sim_df = calculate_cosine_similarity(user_of_reference, ui_matrix)
     neighbor_rank = calculate_nearest_neighbors(sim_df)
@@ -338,7 +338,7 @@ def collaborative_filtering(df, user_of_interest):
     except:
         pass
     df = COSINE_STEP(df, user_of_interest)
-    beer_list = list(df[df['username']=='tsharp93']['beer_name'])
+    beer_list = list(df[df['username']==user_of_interest]['beer_name'])
     estimated_rating_list = []
     error_list = []
     for beer in beer_list:
@@ -346,7 +346,7 @@ def collaborative_filtering(df, user_of_interest):
             estimated_rating = df[ (df.sort_values('nearest_neighbor_rank')['beer_name'] == beer) & (df['username']!=user_of_interest) ]['user_rating'].iloc[0]
             estimated_rating_list.append(estimated_rating)
 
-            user_rating = df[(df['username']=='tsharp93') & (df['beer_name']==beer)]['user_rating'].iloc[0].astype(float)
+            user_rating = df[(df['username']==user_of_interest) & (df['beer_name']==beer)]['user_rating'].iloc[0].astype(float)
             error_list.append(estimated_rating-user_rating)
         except IndexError:
             print("SKIPPING:", beer)
@@ -363,11 +363,17 @@ def collaborative_filtering(df, user_of_interest):
     return mae, quarter_error_perc, half_error_perc 
 
 # hybrid
-def hybrid(df, user_of_interest, target):
+def run_hybrid(df, user_of_interest, target):
     
     features = list(df.columns[df.columns != target])
-    features.remove('username')
-    features.remove('beer_name')
+    try:
+        features.remove('username')
+    except:
+        pass
+    try:
+        features.remove('beer_name')
+    except:
+        pass
     print("FEATURES ", features[:10])
     print('\n')
     print("TARGET ", target)
@@ -386,6 +392,7 @@ def hybrid(df, user_of_interest, target):
     mae_list = []
     quarter_abs_error_list = []
     half_abs_error_list = []
+    model_list = []
 
 
     for min_ppu in min_ppu_list:
@@ -409,7 +416,7 @@ def hybrid(df, user_of_interest, target):
 
             # train
             from sklearn.linear_model import LassoCV
-            model = LassoCV(fit_intercept=True, normalize=True, cv=5, random_state=rand_state)
+            model = LassoCV(fit_intercept=True, normalize=True, cv=5, random_state=12)
             model.fit(X_train, y_train)
 
             # Evaluate model on user's data 
@@ -427,10 +434,12 @@ def hybrid(df, user_of_interest, target):
             quarter_abs_error_list.append(100*len(results_df[results_df['abs_error']<=0.25])/len(results_df))
             half_abs_error_list.append(100*len(results_df[results_df['abs_error']<=0.50])/len(results_df))
             mae_list.append(mae)
+            model_list.append(model)
 
         # add breaks
         quarter_abs_error_list.append(0)
         half_abs_error_list.append(0)
         mae_list.append(0)
+        model_list.append(0)
         
-    return mae_list, min_ppu_list, n_users_list
+    return model_list, mae_list, quarter_abs_error_list, half_abs_error_list

@@ -8,7 +8,7 @@ from dash.dependencies import Input, Output, State
 import numpy as np
 
 from app import app, server
-from tabs import content_based_filtering
+from tabs import content_based_filtering, collab_filt, hybrid
 from util import *
 
 # Layout
@@ -26,9 +26,10 @@ app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
 
     # tabs
-    dcc.Tabs(id="tabs", value='me', children=[
-        # dcc.Tab(label='Me', value='me'),
+    dcc.Tabs(id="tabs", value='cbf', children=[
         dcc.Tab(label='Content Based Filtering', value='cbf'),
+        dcc.Tab(label='Collaborative Filtering', value='collabfilt'),
+        dcc.Tab(label='Hybrid', value='hybrid'),
     ]),
 
     # page content
@@ -42,24 +43,22 @@ app.layout = html.Div([
 @app.callback(Output('url', 'pathname'),
               [Input('tabs','value')])
 def tab_selection(tab):
-   '''
-   @doc: callback function for the page buttons in the header
-   @args: pathname is a str representing the button path that points to the
-      correct html.Div() objects defined above.
-   @return: the appropriate html.Div() object as defined above
-   '''
-   if tab == 'me':
-      return '/me'
-   elif tab == 'cbf':
-      return '/cbf'
+    if tab == 'collabfilt':
+        return '/collabfilt'
+    elif tab == 'cbf':
+        return '/cbf'
+    elif tab == 'hybrid':
+        return '/hybrid'
 
 
 # display each app's content based on url (which is updated by tab clicks)
 @app.callback(Output('page-content', 'children'),
               [Input('url', 'pathname')])
 def display_page(pathname):
-    if pathname == '/cbf':
-        return content_based_filtering.layout
+    if pathname == '/collabfilt':
+        return collab_filt.layout
+    elif pathname == '/hybrid':
+        return hybrid.layout
     else:
         return content_based_filtering.layout
 
