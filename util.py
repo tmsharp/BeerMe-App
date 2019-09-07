@@ -58,15 +58,6 @@ def import_table(db_path,
         df = df[~df.duplicated()]
     
     return(df)
-
-def convert_categorical(df, 
-                        categorical_variables = ['beer_description', 'brewery']):
-    # b. one-hot encode categorical variables
-    for cat_var in categorical_variables:
-        dummies = pd.get_dummies(df[cat_var], drop_first=True, prefix=cat_var)
-        df = pd.merge(df, dummies, left_index=True, right_index=True)
-        
-    return(df) 
     
 def outlier_analysis(df, features, outlier_threshold=5.0):
     # c. flag outliers
@@ -258,7 +249,9 @@ def transform_features_target(df, features, target):
 ## feature selection
 def cat_encoding(df, encoding_col):
 
-    df = convert_categorical(df, [encoding_col])
+    dummies = pd.get_dummies(df[encoding_col], drop_first=True, prefix=encoding_col)
+    df = pd.merge(df, dummies, left_index=True, right_index=True)
+
     df.drop(encoding_col, axis=1, inplace=True)
     
     return df
@@ -268,8 +261,8 @@ def count_vectorizer(df, vectoring_col):
     from sklearn.feature_extraction.text import CountVectorizer
     vect = CountVectorizer()
     X = vect.fit_transform(df[vectoring_col])
-    tfidf_df = pd.DataFrame(X.toarray(), columns=vect.get_feature_names())
-    df = pd.concat([df.reset_index(drop=True), tfidf_df], axis=1)
+    count_df = pd.DataFrame(X.toarray(), columns=vect.get_feature_names())
+    df = pd.concat([df.reset_index(drop=True), count_df], axis=1)
     
     df.drop(vectoring_col, axis=1, inplace=True)
     
@@ -292,7 +285,8 @@ def tfidf_vectorizer(df, vectoring_col):
 def cbf(user_df, target, rand_state=12):
         
     features = list(user_df.columns[user_df.columns != target])
-    print("FEATURES ", features[:10])
+    print("LEN OF FEATURES", len(features))
+    print("TOP FEATURES ", features[:10])
     print("TARGET ", target)
   
     from sklearn.model_selection import train_test_split
@@ -374,10 +368,9 @@ def run_hybrid(df, user_of_interest, target):
         features.remove('beer_name')
     except:
         pass
-    print("FEATURES ", features[:10])
-    print('\n')
+    print("LEN OF FEATURES", len(features))
+    print("TOP FEATURES ", features[:10])
     print("TARGET ", target)
-    print('\n')
     
     try:
         df.drop('nearest_neighbor_rank', axis=1, inplace=True)
