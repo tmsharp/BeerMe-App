@@ -17,13 +17,10 @@ def username_options(database_path=db_path):
 
 
 def beer_options(database_path=db_path):
-    print("NOW")
     query = "SELECT DISTINCT beer_name FROM prepped_data ORDER BY beer_name"
     with sqlite3.connect(database_path) as conn:
         beers = list(pd.read_sql(query,conn)['beer_name'])
-    print("now")
     beer_options = [{'label': beer, 'value': beer} for beer in beers]
-    print("NOW")
     return beer_options
 
 
@@ -58,9 +55,18 @@ def import_table(db_path,
         df = df[~df.duplicated()]
     
     return(df)
-    
-def outlier_analysis(df, features, outlier_threshold=5.0):
-    # c. flag outliers
+
+def remove_outliers(df, features):
+    for feature in features:
+        q1 = df[feature].quantile(.25)
+        q3 = df[feature].quantile(.75)
+        iqr = q3 - q1
+        non_outlier_mask = (df[feature] >= q1 - 1.5*iqr) & (df[feature] <= q3 + 1.5*iqr)
+        df = df[non_outlier_mask]
+    return df  
+
+def outlier_analysis(df, features, outlier_threshold=2.5):
+   
     print('\n')
     print("1. NA Count...")
     print(df.loc[:,features].isna().sum())
@@ -82,14 +88,7 @@ def outlier_analysis(df, features, outlier_threshold=5.0):
 
             # store feature for outlier removal if necessary
             if 100*len(outliers)/len(df) > outlier_threshold:
-                userInput = input("Remove outliers? (Y/N)")
-                while userInput != "Y" and userInput != "N":
-                    userInput = input("Remove outliers? (Y/N)")
-                if userInput == "Y":
-                    features_to_remove += [feature]
-                elif userInput == "N":
-                    pass
-            print("\n")
+                features_to_remove += [feature]
             
         except TypeError:
             print("FEATURE {}".format(feature))
@@ -106,14 +105,7 @@ def outlier_analysis(df, features, outlier_threshold=5.0):
 
             # store feature for outlier removal if necessary 
             if 100*len(outliers)/len(non_nas) > outlier_threshold:
-                userInput = input("Remove outliers? (Y/N)")
-                while userInput != "Y" and userInput != "N":
-                    userInput = input("Remove outliers? (Y/N)")
-                if userInput == "Y":
-                    features_to_remove += [feature]
-                elif userInput == "N":
-                    pass
-            print("\n")
+                features_to_remove += [feature]
 
     # remove outliers 
     print("Removing outliers from the following features:", features_to_remove)
@@ -121,18 +113,8 @@ def outlier_analysis(df, features, outlier_threshold=5.0):
 
     return df
 
-def remove_outliers(df, features = ['ABV', 'global_rating', 'user_rating', 'IBU']):
-    for feature in features:
-        q1 = df[feature].quantile(.25)
-        q3 = df[feature].quantile(.75)
-        iqr = q3 - q1
-        non_outlier_mask = (df[feature] >= q1 - 1.5*iqr) & (df[feature] <= q3 + 1.5*iqr)
-        df = df[non_outlier_mask]
 
-    return df
-
-
-def impute_na(df, features = ['ABV', 'global_rating', 'user_rating', 'IBU'], impute_method = 'mean'):
+def impute_na(df, features, impute_method = 'mean'):
 
     for feature in features:
         if impute_method == 'mean':
@@ -282,26 +264,52 @@ def tfidf_vectorizer(df, vectoring_col):
 
 ## models
 # CBF 
-def cbf(user_df, target, rand_state=12):
+def cbf(user_df, algorithm, target, impute_na_mean=False, remove_all_outliers=False, rand_state=12):
         
     features = list(user_df.columns[user_df.columns != target])
     print("LEN OF FEATURES", len(features))
     print("TOP FEATURES ", features[:10])
     print("TARGET ", target)
-  
+    
+    # # impute nan with mean
+    # if impute_na_mean == True:
+    #     user_df = impute_na(user_df, features, impute_method='mean')
+    # else:
+    #     pass
+    
+    # remove outliers
+    if remove_all_outliers == True:
+        user_df = outlier_analysis(user_df, [target], outlier_threshold=0.0)
+    else:
+        pass
+    
+    # train test split
     from sklearn.model_selection import train_test_split
     X_train, X_test, y_train, y_test = train_test_split(user_df[features], user_df[target], test_size=0.2, random_state=rand_state)
     
+    # setup alg and param space for grid search 
+    if algorithm == 'Lasso':
+        from sklearn.linear_model import Lasso
+        model = Lasso(fit_intercept=True, normalize=True, random_state=rand_state)
+        param_space = {'alpha': np.linspace(0.01, 1.0)}
+    
+    elif algorithm == 'Ridge':
+        from sklearn.linear_model import Ridge
+        model = Ridge(fit_intercept=True, normalize=True, random_state=rand_state)
+        param_space = {'alpha': np.linspace(0.01, 1.0)}
+        
+    elif algorithm == 'ElasticNet':
+        from sklearn.linear_model import ElasticNet
+        model = ElasticNet(fit_intercept=True, normalize=True, random_state=rand_state)
+        param_space = {'alpha': np.linspace(0.01, 1.0),
+                       'l1_ratio': np.linspace(0.01, 1.0),}
+        
+    else:
+        raise ValueError("Please input a correct algorithm")
+        
     # gridsearch CV 
-    from sklearn.linear_model import Lasso
     from sklearn.model_selection import GridSearchCV
-
-    param_space = {'alpha': np.linspace(0.001, 1.0),
-                    'fit_intercept': [True],
-                    'normalize': [True]}
-
-    lasso = Lasso()
-    gscv = GridSearchCV(lasso, param_space, cv=5, scoring='neg_mean_absolute_error', refit=True)
+    gscv = GridSearchCV(model, param_space, cv=5, scoring='neg_mean_absolute_error', iid=True, refit=True)
     gscv.fit(X_train, y_train)
     
     # get best model 
@@ -321,8 +329,11 @@ def cbf(user_df, target, rand_state=12):
 
     # fit best model over all data 
     best_model.fit(user_df[features], user_df[target])
+    best_params = {}
+    for key in param_space.keys():
+        best_params[key] = best_model.get_params()[key]
     
-    return best_model, mae, quarter_error_perc, half_error_perc
+    return best_model, best_params, mae, quarter_error_perc, half_error_perc
 
 
 # semi-coldstart - collaborative filtering
@@ -368,14 +379,14 @@ def run_hybrid(df, user_of_interest, target):
         features.remove('beer_name')
     except:
         pass
-    print("LEN OF FEATURES", len(features))
-    print("TOP FEATURES ", features[:10])
-    print("TARGET ", target)
-    
     try:
         df.drop('nearest_neighbor_rank', axis=1, inplace=True)
     except:
         pass
+    
+    print("LEN OF FEATURES", len(features))
+    print("TOP FEATURES ", features[:10])
+    print("TARGET ", target)
     df = COSINE_STEP(df, user_of_interest)
 
     min_ppu_list = [0, 50, 100, 250, 500, 750, 1000]

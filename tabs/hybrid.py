@@ -133,12 +133,16 @@ def build_model(n_clicks, user_of_interest, feature_selection):
         # feature prep
         if feature_selection == 'simple':
             hybrid_df = df.drop(['beer_description'], axis=1, inplace=False)
-        # elif feature_selection == 'cat-encoding':
-        #     user_df = cat_encoding(df, 'beer_description')
-        # elif feature_selection == 'count-vect':
-        #     user_df = count_vectorizer(df,'beer_description')
-        # elif feature_selection == 'tfidf-vect':
-        #     user_df = tfidf_vectorizer(df,'beer_description')
+           
+        elif feature_selection == 'cat-encoding':
+            df = import_table(db_path, query = "SELECT username, user_rating, beer_name, beer_description, ABV, IBU, global_rating FROM prepped_data")
+            hybrid_df = cat_encoding(df, 'beer_description')
+        elif feature_selection == 'count-vect':
+            df = import_table(db_path, query = "SELECT username, user_rating, beer_name, beer_description, ABV, IBU, global_rating FROM prepped_data")
+            hybrid_df = count_vectorizer(df, 'beer_description')
+        elif feature_selection == 'tfidf-vect':
+            df = import_table(db_path, query = "SELECT username, user_rating, beer_name, beer_description, ABV, IBU, global_rating FROM prepped_data")
+            hybrid_df = count_vectorizer(df, 'beer_description')
 
         print(hybrid_df)
         model_list, mae_list, quarter_list, half_list = run_hybrid(hybrid_df, user_of_interest, 'user_rating')

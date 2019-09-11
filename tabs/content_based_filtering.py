@@ -23,7 +23,6 @@ layout = html.Div(className = 'container my-4', children =[
                 multi = False
             )
        ]),
-
         # feature selection
         html.Div(className='col-lg-5 my-4', children=[
                 html.H4("Select Which Feature Selection You'd Like to Use"),
@@ -33,6 +32,17 @@ layout = html.Div(className = 'container my-4', children =[
                                 {'label': 'Categorical Encoding of Beer Description', 'value': 'cat-encoding'},
                                 {'label': 'Count Vectorizer of Beer Description', 'value': 'count-vect'},
                                 {'label': 'TFIDF Vectorizer of Beer Description', 'value': 'tfidf-vect'}],
+                    multi = False
+                )
+        ]),
+        # alg selection
+        html.Div(className='col-lg-5 my-4', children=[
+                html.H4("Select Which Model You'd Like to Use"),
+                dcc.Dropdown(
+                    id = 'model-selection-dropdown-cbf',
+                    options = [{'label': 'Lasso', 'value': 'Lasso'},
+                                {'label': 'Ridge', 'value': 'Ridge'},
+                                {'label': 'ElasticNet', 'value': 'ElasticNet'}],
                     multi = False
                 )
         ]),
@@ -123,8 +133,9 @@ def display_beer_loader(n_clicks, value):
 @app.callback(Output('model-results-cbf', 'children'),
                 [Input('model-button-cbf', 'n_clicks')],
                 [State('username-selection-dropdown-cbf', 'value'),
-                 State('feature-selection-dropdown-cbf', 'value')])
-def build_model(n_clicks, user_of_interest, feature_selection):
+                 State('feature-selection-dropdown-cbf', 'value'),
+                 State('model-selection-dropdown-cbf', 'value')])
+def build_model(n_clicks, user_of_interest, feature_selection, alg):
 
     if n_clicks != None:
        
@@ -148,7 +159,7 @@ def build_model(n_clicks, user_of_interest, feature_selection):
             user_df = df[df['username'] == user_of_interest]
             user_df.drop(['username'], axis=1, inplace=True)
 
-        model, mae, quarter, half = cbf(user_df, 'user_rating')
+        model, best_params, mae, quarter, half = cbf(user_df, alg, 'user_rating', impute_na_mean=True, remove_all_outliers=True)
 
         d={}
         d['model'] = model
@@ -164,7 +175,8 @@ def build_model(n_clicks, user_of_interest, feature_selection):
                     html.Div("Full analysis below:", style={'text-align':'center', 'font-weight':'bold'}),
                     html.Div("Accuracy within 0.25 stars: {:.2f}%".format(quarter), style={'text-align':'center', 'font-size':'small'}),
                     html.Div("Accuracy within 0.50 stars: {:.2f}%".format(half), style={'text-align':'center', 'font-size':'small'}),
-                    html.Div("Mean Absolute Error (MAE): {:.2f}".format(mae), style={'text-align':'center', 'font-size':'small'})]
+                    html.Div("Mean Absolute Error (MAE): {:.2f}".format(mae), style={'text-align':'center', 'font-size':'small'}),
+                    html.Div("Best Parameters: {}".format(best_params), style={'text-align':'center', 'font-size':'small'})]
         ret_html = html.Div(children=children)
         return ret_html
 
