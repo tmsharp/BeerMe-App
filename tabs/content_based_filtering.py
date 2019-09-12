@@ -111,6 +111,24 @@ layout = html.Div(className = 'container my-4', children =[
         ]),
     ]),
 
+    # suggestion section
+    html.Div(className='card', children = [
+        html.Div(className='card-body', children = [
+            html.H2(className='card-title text-center', children = "Suggest a Beer"),
+            html.Div(className='card-text text-center m-3', children = [
+                    """
+                    Let us suggest a new beer for you!
+                    """
+            ]),
+            html.Div(className='row justify-content-center', children=[
+                html.Button('Suggest', id='suggestion-button-cbf', className='btn btn-outline-primary')
+            ]),
+            html.Div(className='row justify-content-center my-3', children=[
+                html.Div(id='suggestion-results-cbf')
+            ]),
+        ]),
+    ]),
+
 ])
 # end container
 
@@ -120,7 +138,6 @@ layout = html.Div(className = 'container my-4', children =[
                 [Input('search-button-cbf', 'n_clicks')],
                 [State('beer-selection-dropdown-cbf', 'value')])
 def display_beer_loader(n_clicks, value):
-    print(n_clicks, value)
     if value != None:
         if len(value) == 1:
             return {'display': 'none'}
@@ -288,8 +305,8 @@ def rank_beers(n_clicks, beers):
         beer_df.sort_values('predictions', inplace=True, ascending=False)
         top_beer = beer_df.iloc[0,0]
         
-        random_responses = ["Our best guess is you're gonna love {}!", ]
-                            # "Forget the other options, {} should be your next cold one!"]
+        random_responses = ["Our best guess is you're gonna love {}!", 
+                            "Forget the other options, {} should be your next one!"]
         rand_ind = np.random.randint(0,len(random_responses))
 
         children = [html.Div(random_responses[rand_ind].format(str(top_beer)), style={'font-size':'large', 'font-weight':'bold'}), 
@@ -300,4 +317,63 @@ def rank_beers(n_clicks, beers):
             children.append(child)
 
         ret_html = html.Div(children=children)
+        return ret_html
+
+@app.callback(Output('suggestion-results-cbf', 'children'),
+                [Input('suggestion-button-cbf', 'n_clicks')])
+def suggest_beers(n_clicks):
+
+     if n_clicks != None:
+        with open('cbf-model.pkl', 'rb') as file:
+            d = pickle.load(file)
+            model = d['model']
+            feature_selection = d['feature_selection']
+    
+    
+        if feature_selection == 'simple':
+            query = "SELECT beer_name, ABV, IBU, global_rating FROM prepped_data"
+            beer_df = import_table(db_path, query, remove_dups=False)
+            beer_df = beer_df.groupby('beer_name').mean().reset_index()
+            beer_df = beer_df[~beer_df.duplicated()]
+            beer_list = beer_df['beer_name']
+            beer_df.drop('beer_name', axis=1, inplace=True)
+            predictions = model.predict(beer_df)
+
+        elif feature_selection == 'cat-encoding':
+            df = import_table(db_path, query = "SELECT beer_name, beer_description, ABV, IBU, global_rating FROM prepped_data")
+            df = df.groupby('beer_name').mean().reset_index()
+            beer_df = cat_encoding(df, 'beer_description')
+            beer_list = beer_df['beer_name']
+            beer_df = beer_df.drop('beer_name', axis=1)
+            beer_df = beer_df[~beer_df.duplicated()]
+            predictions = model.predict(beer_df)
+
+        elif feature_selection == 'count-vect':
+            df = import_table(db_path, query = "SELECT beer_name, beer_description, ABV, IBU, global_rating FROM prepped_data")
+            df = count_vectorizer(df, 'beer_description')
+            beer_df = df.groupby('beer_name').mean().reset_index()
+            beer_list = beer_df['beer_name']
+            beer_df = beer_df.drop('beer_name', axis=1)
+            beer_df = beer_df[~beer_df.duplicated()]
+            predictions = model.predict(beer_df)
+           
+        elif feature_selection == 'tfidf-vect':
+            df = import_table(db_path, query = "SELECT beer_name, beer_description, ABV, IBU, global_rating FROM prepped_data")
+            df = tfidf_vectorizer(df, 'beer_description')
+            beer_df = df.groupby('beer_name').mean().reset_index()
+            beer_list = beer_df['beer_name']
+            beer_df = beer_df.drop('beer_name', axis=1)
+            beer_df = beer_df[~beer_df.duplicated()]
+            predictions = model.predict(beer_df)
+
+        beer_df['predictions'] = predictions
+        beer_df['beer_name'] = beer_list
+        beer_df = beer_df[beer_df['predictions'] > 4.0]
+
+        ind = np.random.randint(0, len(beer_df))
+        prediction = beer_df.iloc[ind,]['predictions']
+        beer_name = beer_df.iloc[ind,]['beer_name']
+
+        ret_html = html.Div("We think your next one should be {} (rating = {:.2f})".format(beer_name, prediction),
+                             style={'font-size':'large', 'font-weight':'bold'})
         return ret_html

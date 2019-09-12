@@ -175,8 +175,8 @@ def rank_beers(n_clicks, user_of_interest, beers):
         beer_df.sort_values('predictions', inplace=True, ascending=False)
         top_beer = beer_df.iloc[0,0]
     
-        random_responses = ["Our best guess is you're gonna love {}!", ]
-                            # "Forget the other options, {} should be your next cold one!"]
+        random_responses = ["Our best guess is you're gonna love {}!", 
+                            "Forget the other options, {} should be your next one!"]
         rand_ind = np.random.randint(0,len(random_responses))
 
         children = [html.Div(random_responses[rand_ind].format(str(top_beer)), style={'font-size':'large', 'font-weight':'bold'}), 

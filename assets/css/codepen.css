@@ -1,0 +1,126 @@
+body {
+  overflow-x: hidden;
+  background-color: white;
+  padding: 0;
+}
+
+div, svg {
+  user-select: none !important;
+}
+
+/*div.header:before {*/
+    /*content: "";*/
+    /*display: inline-block;*/
+    /*height: 100%;*/
+    /*vertical-align: middle;*/
+/*}*/
+
+.verticalLine-2 {
+  border-left: thick solid white;
+  border-left-width: initial;
+  border-left-style: solid;
+  border-left-color: white;
+}
+
+.header{
+  background: #003366 !important;
+  color: white !important;
+  position: relative;
+  width: 100% ;
+  padding: 10px 10px 10px 20px;
+  -webkit-print-color-adjust: exact;
+  vertical-align:middle;
+    display: inline-block;
+
+}
+
+div.padded{ padding: 10px; }
+
+h6.padded, p.padded{
+	padding: 2px 0px;
+	margin-top: 10px;
+	margin-bottom: 2px;
+}
+
+.clear{
+    clear:both;
+}
+
+.indicator{
+    border:1px solid #C8D4E3;
+    border-radius: 25px;
+    background-color: white;
+    min-height:75px;
+    vertical-align:middle;
+    margin-left: 10px;
+    margin-right: 10px;
+    /*margin-top: 10px;*/
+    margin-bottom: 5px;
+    padding: 10px 20px 10px 20px;
+    /*min-width: 220px;*/
+}
+
+.indicator_text{
+    text-align: center;
+    font-size: 1.8rem;
+    margin-bottom: auto;
+    /*font-size: 1vw;*/
+    }
+
+.indicator_value {
+  text-align: center;
+  font-weight: 500;
+  font-size: 1.6rem;
+  margin-bottom: auto;
+  color: #2a3f5f;
+}
+
+.indicator_delta {
+  text-align: center;
+  font-weight: 400;
+  font-size: 1.2rem;
+  margin-bottom: auto;
+}
+
+
+.map-size{
+  width: 100%;
+  position: relative;
+  max-width: 960px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.custom-table{
+  font-size: small;
+  font-weight: 400;
+}
+
+.select-options{
+   padding: 5px 10px 10px 10px;
+   background-color: #DCDCDC;
+   border-radius: 25px;
+}
+
+.scrollable_div{
+    overflow-y: scroll;
+    height: 425px;
+    width: 90% !important;
+}
+
+.tagline{
+    padding-left: 10px;
+    margin-bottom: 0px;
+    display: flex;
+    flex-direction: column;
+    line-height: inherit;
+}
+
+.tagline-400{
+    padding-left: 10px;
+    margin-bottom: 0px;
+    display: flex;
+    flex-direction: column;
+    line-height: inherit;
+    font-weight: 400;
+}

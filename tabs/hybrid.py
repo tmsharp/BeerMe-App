@@ -101,6 +101,24 @@ layout = html.Div(className = 'container my-4', children =[
         ]),
     ]),
 
+       # suggestion section
+    html.Div(className='card', children = [
+        html.Div(className='card-body', children = [
+            html.H2(className='card-title text-center', children = "Suggest a Beer"),
+            html.Div(className='card-text text-center m-3', children = [
+                    """
+                    Let us suggest a new beer for you!
+                    """
+            ]),
+            html.Div(className='row justify-content-center', children=[
+                html.Button('Suggest', id='suggestion-button-hybrid', className='btn btn-outline-primary')
+            ]),
+            html.Div(className='row justify-content-center my-3', children=[
+                html.Div(id='suggestion-results-hybrid')
+            ]),
+        ]),
+    ]),
+
 ])
 # end container
 
@@ -110,7 +128,6 @@ layout = html.Div(className = 'container my-4', children =[
                 [Input('search-button-hybrid', 'n_clicks')],
                 [State('beer-selection-dropdown-hybrid', 'value')])
 def display_beer_loader(n_clicks, value):
-    print(n_clicks, value)
     if value != None:
         if len(value) == 1:
             return {'display': 'none'}
@@ -144,14 +161,10 @@ def build_model(n_clicks, user_of_interest, feature_selection):
             df = import_table(db_path, query = "SELECT username, user_rating, beer_name, beer_description, ABV, IBU, global_rating FROM prepped_data")
             hybrid_df = count_vectorizer(df, 'beer_description')
 
-        print(hybrid_df)
         model_list, mae_list, quarter_list, half_list = run_hybrid(hybrid_df, user_of_interest, 'user_rating')
 
         mae = min(i for i in mae_list if i > 0)
         ind = mae_list.index(mae)
-
-        print(mae_list, ind)
-        print(len(model_list), len(mae_list), len(quarter_list), len(half_list))
 
         model = model_list[ind]
         quarter = quarter_list[ind]
@@ -194,21 +207,30 @@ def predict_beer_rating(n_clicks, beer):
             beer_df = beer_df[~beer_df.duplicated()]
             prediction = model.predict(beer_df)
 
-        # elif feature_selection == 'cat-encoding':
-        #     query = "SELECT ABV, IBU, global_rating, beer_description FROM prepped_data WHERE beer_name = '{}'".format(beer)
-        #     beer_df = import_table(db_path, query, remove_dups=False)
-        #     beer_df['global_rating'] = beer_df['global_rating'].mean()
-        #     beer_df = beer_df[~beer_df.duplicated()]
-        #     # feature encoding
-        #     beer_df = cat_encoding(beer_df, 'beer_description')
-        #     #
-        #     print("HERE")
-        #     print(beer_df)
-        #     prediction = model.predict(beer_df)
-        # elif feature_selection == 'count-vect':
-        #     user_df = count_vectorizer(df,'beer_description')
-        # elif feature_selection == 'tfidf-vect':
-        #     user_df = tfidf_vectorizer(df,'beer_description')
+        elif feature_selection == 'cat-encoding':
+            df = import_table(db_path, query = "SELECT beer_name, beer_description, ABV, IBU, global_rating FROM prepped_data")
+            df = cat_encoding(df, 'beer_description')
+            beer_df = df[df['beer_name']==beer].drop('beer_name', axis=1)
+            beer_df['global_rating'] = beer_df['global_rating'].mean()
+            beer_df = beer_df[~beer_df.duplicated()]
+            prediction = model.predict(beer_df)
+
+        elif feature_selection == 'count-vect':
+            df = import_table(db_path, query = "SELECT beer_name, beer_description, ABV, IBU, global_rating FROM prepped_data")
+            df = count_vectorizer(df, 'beer_description')
+            beer_df = df[df['beer_name']==beer].drop('beer_name', axis=1)
+            beer_df['global_rating'] = beer_df['global_rating'].mean()
+            beer_df = beer_df[~beer_df.duplicated()]
+            prediction = model.predict(beer_df)
+           
+        elif feature_selection == 'tfidf-vect':
+            df = import_table(db_path, query = "SELECT beer_name, beer_description, ABV, IBU, global_rating FROM prepped_data")
+            df = tfidf_vectorizer(df, 'beer_description')
+            beer_df = df[df['beer_name']==beer].drop('beer_name', axis=1)
+            beer_df['global_rating'] = beer_df['global_rating'].mean()
+            beer_df = beer_df[~beer_df.duplicated()]
+            prediction = model.predict(beer_df)
+
         
         ret_html = html.Div("We predict that your rating for this beer will be {:.2f}".format(prediction[0]),
                              style={'font-size':'large', 'font-weight':'bold'})
@@ -237,19 +259,111 @@ def rank_beers(n_clicks, beers):
             
             predictions = model.predict(beer_df.drop('beer_name', axis=1))
             beer_df['predictions'] = predictions
-            beer_df.sort_values('predictions', inplace=True, ascending=False)
-            top_beer = beer_df.iloc[0,0]
+
+        elif feature_selection == 'cat-encoding':
+            df = import_table(db_path, query = "SELECT beer_name, beer_description, ABV, IBU, global_rating FROM prepped_data")
+            df = cat_encoding(df, 'beer_description')
+
+            beer_df = df[df['beer_name'].isin(beers)]
+            beer_df['global_rating'] = beer_df['global_rating'].mean()
+            beer_df = beer_df[~beer_df.duplicated()]
+
+            predictions = model.predict(beer_df.drop('beer_name', axis=1))
+            beer_df['predictions'] = predictions
+
+        elif feature_selection == 'count-vect':
+            df = import_table(db_path, query = "SELECT beer_name, beer_description, ABV, IBU, global_rating FROM prepped_data")
+            df = count_vectorizer(df, 'beer_description')
+
+            beer_df = df[df['beer_name'].isin(beers)]
+            beer_df['global_rating'] = beer_df['global_rating'].mean()
+            beer_df = beer_df[~beer_df.duplicated()]
+
+            predictions = model.predict(beer_df.drop('beer_name', axis=1))
+            beer_df['predictions'] = predictions
+           
+        elif feature_selection == 'tfidf-vect':
+            df = import_table(db_path, query = "SELECT beer_name, beer_description, ABV, IBU, global_rating FROM prepped_data")
+            df = tfidf_vectorizer(df, 'beer_description')
+
+            beer_df = df[df['beer_name'].isin(beers)]
+            beer_df['global_rating'] = beer_df['global_rating'].mean()
+            beer_df = beer_df[~beer_df.duplicated()]
+
+            predictions = model.predict(beer_df.drop('beer_name', axis=1))
+            beer_df['predictions'] = predictions
+
+        beer_df.sort_values('predictions', inplace=True, ascending=False)
+        top_beer = beer_df.iloc[0,0]
+        
+        random_responses = ["Our best guess is you're gonna love {}!", 
+                            "Forget the other options, {} should be your next one!"]
+        rand_ind = np.random.randint(0,len(random_responses))
+
+        children = [html.Div(random_responses[rand_ind].format(str(top_beer)), style={'font-size':'large', 'font-weight':'bold'}), 
+                    html.Br(),
+                    html.Div("Full analysis below: ", style={'text-align':'center', 'font-weight':'bold'})]
+        for beer in beer_df['beer_name']:
+            child = html.Div("{} predicted rating: {:.2f}".format(beer, float(beer_df[beer_df['beer_name']==beer]['predictions'])), style={'text-align':'center', 'font-size':'small'})
+            children.append(child)
+
+        ret_html = html.Div(children=children)
+        return ret_html
+
+@app.callback(Output('suggestion-results-hybrid', 'children'),
+                [Input('suggestion-button-hybrid', 'n_clicks')])
+def suggest_beers(n_clicks):
+    if n_clicks != None:
+        with open('hybrid-model.pkl', 'rb') as file:
+            d = pickle.load(file)
+            model = d['model']
+            feature_selection = d['feature_selection']
+
+
+        if feature_selection == 'simple':
+            query = "SELECT beer_name, ABV, IBU, global_rating FROM prepped_data"
+            beer_df = import_table(db_path, query, remove_dups=False)
+            beer_df = beer_df.groupby('beer_name').mean().reset_index()
+            beer_df = beer_df[~beer_df.duplicated()]
+            beer_list = beer_df['beer_name']
+            beer_df.drop('beer_name', axis=1, inplace=True)
+            predictions = model.predict(beer_df)
+
+        elif feature_selection == 'cat-encoding':
+            df = import_table(db_path, query = "SELECT beer_name, beer_description, ABV, IBU, global_rating FROM prepped_data")
+            df = df.groupby('beer_name').mean().reset_index()
+            beer_df = cat_encoding(df, 'beer_description')
+            beer_list = beer_df['beer_name']
+            beer_df = beer_df.drop('beer_name', axis=1)
+            beer_df = beer_df[~beer_df.duplicated()]
+            predictions = model.predict(beer_df)
+
+        elif feature_selection == 'count-vect':
+            df = import_table(db_path, query = "SELECT beer_name, beer_description, ABV, IBU, global_rating FROM prepped_data")
+            df = count_vectorizer(df, 'beer_description')
+            beer_df = df.groupby('beer_name').mean().reset_index()
+            beer_list = beer_df['beer_name']
+            beer_df = beer_df.drop('beer_name', axis=1)
+            beer_df = beer_df[~beer_df.duplicated()]
+            predictions = model.predict(beer_df)
             
-            random_responses = ["Our best guess is you're gonna love {}!", ]
-                                # "Forget the other options, {} should be your next cold one!"]
-            rand_ind = np.random.randint(0,len(random_responses))
+        elif feature_selection == 'tfidf-vect':
+            df = import_table(db_path, query = "SELECT beer_name, beer_description, ABV, IBU, global_rating FROM prepped_data")
+            df = tfidf_vectorizer(df, 'beer_description')
+            beer_df = df.groupby('beer_name').mean().reset_index()
+            beer_list = beer_df['beer_name']
+            beer_df = beer_df.drop('beer_name', axis=1)
+            beer_df = beer_df[~beer_df.duplicated()]
+            predictions = model.predict(beer_df)
 
-            children = [html.Div(random_responses[rand_ind].format(str(top_beer)), style={'font-size':'large', 'font-weight':'bold'}), 
-                        html.Br(),
-                        html.Div("Full analysis below: ", style={'text-align':'center', 'font-weight':'bold'})]
-            for beer in beer_df['beer_name']:
-                child = html.Div("{} predicted rating: {:.2f}".format(beer, float(beer_df[beer_df['beer_name']==beer]['predictions'])), style={'text-align':'center', 'font-size':'small'})
-                children.append(child)
+        beer_df['predictions'] = predictions
+        beer_df['beer_name'] = beer_list
+        beer_df = beer_df[beer_df['predictions'] > 4.0]
 
-            ret_html = html.Div(children=children)
-            return ret_html
+        ind = np.random.randint(0, len(beer_df))
+        prediction = beer_df.iloc[ind,]['predictions']
+        beer_name = beer_df.iloc[ind,]['beer_name']
+
+        ret_html = html.Div("We think your next one should be {} (rating = {:.2f})".format(beer_name, prediction),
+                                style={'font-size':'large', 'font-weight':'bold'})
+        return ret_html

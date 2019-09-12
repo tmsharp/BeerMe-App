@@ -21,10 +21,22 @@ app.layout = html.Div([
               crossOrigin="anonymous"),
     html.Link(href='/assets/css/main.css', rel='stylesheet'),
     html.Link(href='/assets/css/loadwheel.css', rel='stylesheet'),
+    html.Link(href='/assets/css/normalize.css', rel='stylesheet'),
+    html.Link(href='/assets/css/skeleton.css', rel='stylesheet'),
+    html.Link(href='/assets/css/codepen.css', rel='stylesheet'),
+    html.Link(href='/assets/css/tabs.css', rel='stylesheet'),
     
     # url
     dcc.Location(id='url', refresh=False),
 
+    # header
+    html.Div(className='row', style={'background':'#fcc203', 'padding':'10px'}, children = [
+        html.Div(style={'display': 'flex'}, children = [
+            html.H2('BeerMe', className = "tagline-400", style={'padding-right': '10px'}),
+            html.H4('A Recommendation System for Untappd', className="verticalLine-2 tagline")
+        ])
+    ]),
+    
     # tabs
     dcc.Tabs(id="tabs", value='cbf', children=[
         dcc.Tab(label='Content Based Filtering', value='cbf'),
