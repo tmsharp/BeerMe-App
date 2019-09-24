@@ -30,7 +30,7 @@ app.layout = html.Div(className="row", children=[
     dcc.Location(id='url', refresh=False),
 
     # header
-    html.Div(className='row', style={'background':'#fcc203', 'padding':'10px'}, children = [
+    html.Div(className='row', style={'background':'#fcc203', 'padding':'10px', 'padding-top':'0px'}, children = [
         html.Div(style={'display': 'flex'}, children = [
             html.H2('BeerMe', className = "tagline-400", style={'padding-right': '10px'}),
             html.Div(style={'margin-top':'10px'}, children=[
