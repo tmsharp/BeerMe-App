@@ -42,10 +42,27 @@ layout = html.Div(className = 'row', children =[
     
     ]),
 
-    html.Div(className='container padded', style={'margin-top':'50px', 'background':'white'}, children=[
-        html.H3("Ready to Use that Model we just Built?"),
-        html.Button('Yup!', id='select-model-button', className=''),
-        html.Div(id='select-model-radio')
+    html.Div(id='explanation-container', className='container padded', style={'margin-top':'50px', 'background':'white'}, children=[
+        html.H3("Using the Model we just Built"),
+        # html.Button('Yup!', id='select-model-button', className=''),
+        html.Div(id='select-model-radio', children=[
+            html.Div(className='container', children=[
+            html.H5("""How do you want to put that model to work? It can be used to rate a specific beer you're interested in,
+                            rank a list of beers that you're trying to choose between, or we can just suggest a brand new beer 
+                            that you may never even heard of!"""),
+                dcc.Dropdown(
+                        id='model-use-dropdown',
+                        options=[
+                            {'label': 'Rate a Beer', 'value': 'rate'},
+                            {'label': 'Rank some Beers', 'value': 'rank'},
+                            {'label': 'Suggest a Beer', 'value': 'suggest'}
+                        ],
+                        value='rate',
+                        style={'width':'300px'}
+                ), 
+                html.Button('Let\'s do this', id='popup-cards-button', className=''),
+            ]),
+        ]),
     ]),
 
     html.Div(id='model-use-section', style={'margin-top':'50px'}),
@@ -170,7 +187,13 @@ def build_model(n_clicks, user_of_interest, feature_selection, alg):
         ret_html = html.Div(children=children)
         return ret_html
 
-
+@app.callback(Output('explanation-container', 'style'),
+                [Input('model-results-exisiting-user', 'children')])
+def display_explanation_container(children):
+    if children != None:
+        return {'margin-top':'50px', 'background':'white', 'display': 'block'}
+    else:
+        return {'margin-top':'50px', 'background':'white', 'display': 'none'}
 
 @app.callback(Output('prediction-results-exisiting-user', 'children'),
                 [Input('prediction-button-exisiting-user', 'n_clicks')],
@@ -354,26 +377,26 @@ def suggest_beers(n_clicks):
         return ret_html
 
 
-@app.callback(Output('select-model-radio', 'children'),
-                [Input('select-model-button', 'n_clicks')])
-def show_model_radio(n_clicks):
-    if n_clicks != None:
-        return html.Div(className='container', children=[
-            html.H5("""How do you want to put that model to work? It can be used to rate a specific beer you're interested in,
-                        rank a list of beers that you're trying to choose between, or we can just suggest a brand new beer 
-                        that you may never even heard of!"""),
-            dcc.Dropdown(
-                    id='model-use-dropdown',
-                    options=[
-                        {'label': 'Rate a Beer', 'value': 'rate'},
-                        {'label': 'Rank some Beers', 'value': 'rank'},
-                        {'label': 'Suggest a Beer', 'value': 'suggest'}
-                    ],
-                    value='rate',
-                    style={'width':'300px'}
-            ), 
-            html.Button('Let\'s do this', id='popup-cards-button', className=''),
-        ])
+# @app.callback(Output('select-model-radio', 'children'),
+#                 [Input('select-model-button', 'n_clicks')])
+# def show_model_radio(n_clicks):
+#     if n_clicks != None:
+#         return html.Div(className='container', children=[
+#             html.H5("""How do you want to put that model to work? It can be used to rate a specific beer you're interested in,
+#                         rank a list of beers that you're trying to choose between, or we can just suggest a brand new beer 
+#                         that you may never even heard of!"""),
+#             dcc.Dropdown(
+#                     id='model-use-dropdown',
+#                     options=[
+#                         {'label': 'Rate a Beer', 'value': 'rate'},
+#                         {'label': 'Rank some Beers', 'value': 'rank'},
+#                         {'label': 'Suggest a Beer', 'value': 'suggest'}
+#                     ],
+#                     value='rate',
+#                     style={'width':'300px'}
+#             ), 
+#             html.Button('Let\'s do this', id='popup-cards-button', className=''),
+#         ])
 
 
 @app.callback(Output('model-use-section', 'children'),
@@ -388,7 +411,7 @@ def show_selected_card(n_clicks, value, data):
             return html.Div(className='container padded', style={'background':'white'}, children = [
                 html.H2(className='', children = "Rate A Beer"),
                 html.Div(className='container', children=[
-                    html.Div([
+                    html.H6([
                             """
                             Select a beer and our algorithm will predict your rating!
                             """
@@ -398,7 +421,8 @@ def show_selected_card(n_clicks, value, data):
                             dcc.Dropdown(
                                 id = 'beer-selection-dropdown-exisiting-user',
                                 options = data,
-                                multi = False
+                                multi = False,
+                                style={'width':'500px'}
                             )
                         ]),
                     ]),
@@ -416,7 +440,7 @@ def show_selected_card(n_clicks, value, data):
             return html.Div(className='container padded', style={'background':'white'}, children = [
                     html.H2(className='', children = "Rank My Beers"),
                     html.Div(className='container', children=[
-                        html.Div(className='', children = [
+                        html.H6(className='', children = [
                                 """
                                 Select a few beers and will tell you which one you'll like best!
                                 """
@@ -426,7 +450,8 @@ def show_selected_card(n_clicks, value, data):
                                 dcc.Dropdown(
                                     id = 'ranking-beer-selection-dropdown-exisiting-user',
                                     options = data,
-                                    multi = True
+                                    multi = True,
+                                    style={'width':'500px'}
                                 )
                             ]),
                         ]),
@@ -444,11 +469,11 @@ def show_selected_card(n_clicks, value, data):
             return html.Div(className='container padded', style={'background':'white'}, children = [
                     html.H2(className='', children = "Suggest a Beer"),
                     html.Div(className='container', children=[
-                        html.Div(className='', children = [
+                        html.H6(
                                 """
                                 Let us suggest a new beer for you!
                                 """
-                        ]),
+                        ),
                         html.Div(className='row', children=[
                             html.Button('Suggest', id='suggestion-button-exisiting-user', className='btn btn-outline-primary')
                         ]),
