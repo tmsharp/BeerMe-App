@@ -8,7 +8,7 @@ from dash.dependencies import Input, Output, State
 import numpy as np
 
 from app import app, server
-from tabs import existing_user, collab_filt, hybrid
+from tabs import existing_user, new_user
 from util import *
 
 # Layout
@@ -42,8 +42,7 @@ app.layout = html.Div(className="row", children=[
     # tabs
     dcc.Tabs(id="tabs", value='cbf', children=[
         dcc.Tab(label='Existing User', value='existing-user'),
-        dcc.Tab(label='Collaborative Filtering', value='collabfilt'),
-        dcc.Tab(label='Hybrid', value='hybrid'),
+        dcc.Tab(label='New User', value='new-user'),
     ]),
 
     # page content
@@ -57,22 +56,18 @@ app.layout = html.Div(className="row", children=[
 @app.callback(Output('url', 'pathname'),
               [Input('tabs','value')])
 def tab_selection(tab):
-    if tab == 'collabfilt':
-        return '/collabfilt'
+    if tab == 'new-user':
+        return '/new-user'
     elif tab == 'existing-user':
         return '/existing-user'
-    elif tab == 'hybrid':
-        return '/hybrid'
 
 
 # display each app's content based on url (which is updated by tab clicks)
 @app.callback(Output('page-content', 'children'),
               [Input('url', 'pathname')])
 def display_page(pathname):
-    if pathname == '/collabfilt':
-        return collab_filt.layout
-    elif pathname == '/hybrid':
-        return hybrid.layout
+    if pathname == '/new-user':
+        return new_user.layout
     else:
         return existing_user.layout
 

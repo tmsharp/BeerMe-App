@@ -1,7 +1,7 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html 
-import dash_bootstrap_components as dbc
+
 from dash.dependencies import Input, Output, State
 import pickle
 import numpy as np
@@ -21,9 +21,10 @@ layout = html.Div(className = 'row', children =[
         html.Div(className='col-lg-5', children=[
             html.H4("Select Your Username"),
             dcc.Dropdown(
-                id = 'username-selection-dropdown-exisiting-user',
+                id = 'username-selection-dropdown-existing-user',
                 options=username_options(),
-                multi = False
+                multi = False,
+                style = {'width': '500px'}
             ),
             html.H4("Select Your Technique"),
                 dcc.Dropdown(
@@ -33,16 +34,17 @@ layout = html.Div(className = 'row', children =[
                         {'label': 'Collaborative Filtering', 'value': 'cf'},
                         {'label': 'Hybrid', 'value': 'hybrid'}
                     ],
-                    value='cbf'
+                    value='cbf',
+                    style = {'width': '500px'}
                 ), 
-
+                
             html.Div(id='model-setup'),
 
         ]),
     
     ]),
 
-    html.Div(className='container', style={'margin-top':'50px', 'background':'white'}, children=[
+    html.Div(id='ready-model-section', className='container padded', style={'margin-top':'50px', 'background':'white'}, children=[
         html.H3("Ready to Use that Model we just Built?"),
         html.Button('Yup!', id='select-model-button', className=''),
         html.Div(id='select-model-radio')
@@ -58,9 +60,9 @@ layout = html.Div(className = 'row', children =[
 
 
 # Callbacks
-@app.callback(Output('beer-loader-exisiting-user', 'style'),
-                [Input('search-button-exisiting-user', 'n_clicks')],
-                [State('beer-selection-dropdown-exisiting-user', 'value')])
+@app.callback(Output('beer-loader-existing-user', 'style'),
+                [Input('search-button-existing-user', 'n_clicks')],
+                [State('beer-selection-dropdown-existing-user', 'value')])
 def display_beer_loader(n_clicks, value):
     if value != None:
         if len(value) == 1:
@@ -80,51 +82,53 @@ def technique_options(value):
                 html.Div(className='col-lg-5', children=[
                         html.H4("Select Which Feature Selection You'd Like to Use"),
                         dcc.Dropdown(
-                            id = 'feature-selection-dropdown-exisiting-user',
+                            id = 'feature-selection-dropdown-existing-user',
                             options = [{'label': 'Simple', 'value': 'simple'},
                                         {'label': 'Categorical Encoding of Beer Description', 'value': 'cat-encoding'},
                                         {'label': 'Count Vectorizer of Beer Description', 'value': 'count-vect'},
                                         {'label': 'TFIDF Vectorizer of Beer Description', 'value': 'tfidf-vect'}],
-                            multi = False
+                            multi = False,
+                            style = {'width': '500px'}
                         )
                 ]),
                 # alg selection
                 html.Div(className='col-lg-5', children=[
                         html.H4("Select Which Model You'd Like to Use"),
                         dcc.Dropdown(
-                            id = 'model-selection-dropdown-exisiting-user',
+                            id = 'model-selection-dropdown-existing-user',
                             options = [{'label': 'Lasso', 'value': 'Lasso'},
                                         {'label': 'Ridge', 'value': 'Ridge'},
                                         {'label': 'ElasticNet', 'value': 'ElasticNet'}],
-                            multi = False
+                            multi = False,
+                            style = {'width': '500px'}
                         )
                 ]),
 
                 html.Div(className='row', children=[
-                    html.Button('Build Model', id='model-button-exisiting-user', className='btn btn-outline-primary'),
+                    html.Button('Build Model', id='model-button-existing-user', className='btn btn-outline-primary'),
                     dcc.Loading(id="loading-model", children=[html.Div(id="loading-model-output")], type="default"),
                 ]),
                 html.Div(className='row', children=[
-                    html.Div(id='model-results-exisiting-user')
+                    html.Div(id='model-results-existing-user')
                 ])
             ])
         else:
             return html.Div([
                 html.Div(className='row', children=[
-                    html.Button('Build Model', id='model-button-exisiting-user', className='btn btn-outline-primary'),
+                    html.Button('Build Model', id='model-button-existing-user', className='btn btn-outline-primary'),
                     dcc.Loading(id="loading-model", children=[html.Div(id="loading-model-output")], type="default"),
                 ]),
                 html.Div(className='row', children=[
-                    html.Div(id='model-results-exisiting-user')
+                    html.Div(id='model-results-existing-user')
                 ])
             ])
 
 
-@app.callback(Output('model-results-exisiting-user', 'children'),
-                [Input('model-button-exisiting-user', 'n_clicks')],
-                [State('username-selection-dropdown-exisiting-user', 'value'),
-                 State('feature-selection-dropdown-exisiting-user', 'value'),
-                 State('model-selection-dropdown-exisiting-user', 'value')])
+@app.callback(Output('model-results-existing-user', 'children'),
+                [Input('model-button-existing-user', 'n_clicks')],
+                [State('username-selection-dropdown-existing-user', 'value'),
+                 State('feature-selection-dropdown-existing-user', 'value'),
+                 State('model-selection-dropdown-existing-user', 'value')])
 def build_model(n_clicks, user_of_interest, feature_selection, alg):
 
     if n_clicks != None:
@@ -155,7 +159,7 @@ def build_model(n_clicks, user_of_interest, feature_selection, alg):
         d['model'] = model
         d['feature_selection'] = feature_selection
 
-        with open('exisiting-user-model.pkl', 'wb') as file:
+        with open('existing-user-model.pkl', 'wb') as file:
             pickle.dump(d, file)
 
         # structure html and return 
@@ -171,14 +175,22 @@ def build_model(n_clicks, user_of_interest, feature_selection, alg):
         return ret_html
 
 
+@app.callback(Output('ready-model-section', 'style'),
+                [Input('model-results-existing-user', 'children')])
+def display_section(children):
+    if children != None:
+        return {'margin-top':'50px', 'background':'white', 'display': 'block'}
+    else:
+        return {'margin-top':'50px', 'background':'white', 'display': 'none'}
 
-@app.callback(Output('prediction-results-exisiting-user', 'children'),
-                [Input('prediction-button-exisiting-user', 'n_clicks')],
-                [State('beer-selection-dropdown-exisiting-user', 'value')])
+
+@app.callback(Output('prediction-results-existing-user', 'children'),
+                [Input('prediction-button-existing-user', 'n_clicks')],
+                [State('beer-selection-dropdown-existing-user', 'value')])
 def predict_beer_rating(n_clicks, beer):
 
     if n_clicks != None:
-        with open('exisiting-user-model.pkl', 'rb') as file:
+        with open('existing-user-model.pkl', 'rb') as file:
             d = pickle.load(file)
             model = d['model']
             feature_selection = d['feature_selection']
@@ -221,13 +233,13 @@ def predict_beer_rating(n_clicks, beer):
         return ret_html
 
 
-@app.callback(Output('ranking-results-exisiting-user', 'children'),
-                [Input('ranking-button-exisiting-user', 'n_clicks')],
-                [State('ranking-beer-selection-dropdown-exisiting-user', 'value')])
+@app.callback(Output('ranking-results-existing-user', 'children'),
+                [Input('ranking-button-existing-user', 'n_clicks')],
+                [State('ranking-beer-selection-dropdown-existing-user', 'value')])
 def rank_beers(n_clicks, beers):
 
     if n_clicks != None:
-        with open('exisiting-user-model.pkl', 'rb') as file:
+        with open('existing-user-model.pkl', 'rb') as file:
             d = pickle.load(file)
             model = d['model']
             feature_selection = d['feature_selection']
@@ -294,12 +306,12 @@ def rank_beers(n_clicks, beers):
         ret_html = html.Div(children=children)
         return ret_html
 
-@app.callback(Output('suggestion-results-exisiting-user', 'children'),
-                [Input('suggestion-button-exisiting-user', 'n_clicks')])
+@app.callback(Output('suggestion-results-existing-user', 'children'),
+                [Input('suggestion-button-existing-user', 'n_clicks')])
 def suggest_beers(n_clicks):
 
      if n_clicks != None:
-        with open('exisiting-user-model.pkl', 'rb') as file:
+        with open('existing-user-model.pkl', 'rb') as file:
             d = pickle.load(file)
             model = d['model']
             feature_selection = d['feature_selection']
@@ -369,7 +381,8 @@ def show_model_radio(n_clicks):
                         {'label': 'Rank some Beers', 'value': 'rank'},
                         {'label': 'Suggest a Beer', 'value': 'suggest'}
                     ],
-                    value='rate'
+                    value='rate',
+                    style = {'width': '500px'}
             ), 
             html.Button('Let\'s do this', id='popup-cards-button', className=''),
         ])
@@ -386,7 +399,7 @@ def show_selected_card(n_clicks, value, data):
 
         if value == 'rate':
             # prediciton section
-            return html.Div(className='container', style={'background':'white'}, children = [
+            return html.Div(className='container padded', style={'background':'white'}, children = [
                 html.Div(className='', children = [
                     html.H2(className='', children = "Rate A Beer"),
                     html.Div(className='', children = [
@@ -397,23 +410,24 @@ def show_selected_card(n_clicks, value, data):
                     html.Div(className='row', children=[
                         html.Div(className='col-lg-5 m-4', children=[
                             dcc.Dropdown(
-                                id = 'beer-selection-dropdown-exisiting-user',
+                                id = 'beer-selection-dropdown-existing-user',
                                 options = data,
-                                multi = False
+                                multi = False,
+                                style = {'width': '500px'}
                             )
                         ]),
                     ]),
                     html.Div(className='row', children=[
-                        html.Button('Predict', id='prediction-button-exisiting-user', className='btn btn-outline-primary')
+                        html.Button('Predict', id='prediction-button-existing-user', className='btn btn-outline-primary')
                     ]),
                     html.Div(className='row', children=[
-                        html.Div(id='prediction-results-exisiting-user')
+                        html.Div(id='prediction-results-existing-user', style={'text-align', 'center'})
                     ]),
                 ]),
             ]),
         elif value == 'rank':
             # ranking section
-            return html.Div(className='container', style={'background':'white'}, children = [
+            return html.Div(className='container padded', style={'background':'white'}, children = [
                 html.Div(className='', children = [
                     html.H2(className='', children = "Rank My Beers"),
                     html.Div(className='', children = [
@@ -424,23 +438,24 @@ def show_selected_card(n_clicks, value, data):
                     html.Div(className='row', children=[
                         html.Div(className='col-lg-5 m-4', children=[
                             dcc.Dropdown(
-                                id = 'ranking-beer-selection-dropdown-exisiting-user',
+                                id = 'ranking-beer-selection-dropdown-existing-user',
                                 options = data,
-                                multi = True
+                                multi = True,
+                                style = {'width': '500px'}
                             )
                         ]),
                     ]),
                     html.Div(className='row', children=[
-                        html.Button('Rank', id='ranking-button-exisiting-user', className='btn btn-outline-primary')
+                        html.Button('Rank', id='ranking-button-existing-user', className='btn btn-outline-primary')
                     ]),
                     html.Div(className='row', children=[
-                        html.Div(id='ranking-results-exisiting-user')
+                        html.Div(id='ranking-results-existing-user')
                     ]),
                 ]),
             ]),
         elif value == 'suggest':
             # suggestion section
-            return html.Div(className='container', style={'background':'white'}, children = [
+            return html.Div(className='container padded', style={'background':'white'}, children = [
                 html.Div(className='', children = [
                     html.H2(className='', children = "Suggest a Beer"),
                     html.Div(className='', children = [
@@ -449,10 +464,10 @@ def show_selected_card(n_clicks, value, data):
                             """
                     ]),
                     html.Div(className='row', children=[
-                        html.Button('Suggest', id='suggestion-button-exisiting-user', className='btn btn-outline-primary')
+                        html.Button('Suggest', id='suggestion-button-existing-user', className='btn btn-outline-primary')
                     ]),
                     html.Div(className='row', children=[
-                        html.Div(id='suggestion-results-exisiting-user')
+                        html.Div(id='suggestion-results-existing-user')
                     ]),
                 ]),
             ]),
