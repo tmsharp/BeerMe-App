@@ -8,7 +8,7 @@ from dash.dependencies import Input, Output, State
 import numpy as np
 
 from app import app, server
-from tabs import existing_user, collab_filt, hybrid
+from tabs import existing_user
 from util import *
 
 # Layout
@@ -40,11 +40,11 @@ app.layout = html.Div(className="row", children=[
     ]),
     
     # tabs
-    dcc.Tabs(id="tabs", value='cbf', children=[
-        dcc.Tab(label='Existing User', value='existing-user'),
-        dcc.Tab(label='Collaborative Filtering', value='collabfilt'),
-        dcc.Tab(label='Hybrid', value='hybrid'),
-    ]),
+    # dcc.Tabs(id="tabs", value='cbf', children=[
+    #     dcc.Tab(label='Existing User', value='existing-user'),
+    #     dcc.Tab(label='Collaborative Filtering', value='collabfilt'),
+    #     dcc.Tab(label='Hybrid', value='hybrid'),
+    # ]),
 
     # page content
     html.Div(id='page-content', style={'margin-top':'50px', 'margin-bottom':'50px'})
@@ -54,15 +54,17 @@ app.layout = html.Div(className="row", children=[
 
 ### callbacks for page content and url 
 # output url for clicking tabs
-@app.callback(Output('url', 'pathname'),
-              [Input('tabs','value')])
-def tab_selection(tab):
-    if tab == 'collabfilt':
-        return '/collabfilt'
-    elif tab == 'existing-user':
-        return '/existing-user'
-    elif tab == 'hybrid':
-        return '/hybrid'
+# @app.callback(Output('url', 'pathname'),
+#               [Input('tabs','value')])
+# def tab_selection(tab):
+#     if tab == 'collabfilt':
+#         return '/collabfilt'
+#     elif tab == 'existing-user':
+#         return '/existing-user'
+#     elif tab == 'hybrid':
+#         return '/hybrid'
+#     else:
+#         return '/'
 
 
 # display each app's content based on url (which is updated by tab clicks)
