@@ -35,6 +35,17 @@
   margin: 0 auto;
   padding: 0 20px;
   box-sizing: border-box; }
+
+  .container-outlined {
+    position: relative;
+    width: 100%;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 20px;
+    box-sizing: border-box; 
+    outline: auto;
+  }
+
 .column,
 .columns {
   width: 100%;

@@ -16,8 +16,8 @@ layout = html.Div(className = 'row', children =[
             ),
     
     # username section
-    html.Div(className='container padded', style={'background':'white'}, children=[
-        html.H3("Let's Build a Model"),
+    html.Div(className='container-outlined padded', style={'background':'white'}, children=[
+        html.H3("Let's Build a Model", style={'font-weight': 'bold', 'margin':'0'}),
         html.Div(className='container', children=[
             html.H4("Select Your Username"),
             dcc.Dropdown(
@@ -42,8 +42,8 @@ layout = html.Div(className = 'row', children =[
     
     ]),
 
-    html.Div(id='explanation-container', className='container padded', style={'margin-top':'50px', 'background':'white'}, children=[
-        html.H3("Using the Model we just Built"),
+    html.Div(id='explanation-container', className='container-outlined padded', style={'margin-top':'50px', 'background':'white'}, children=[
+        html.H3("Using the Model we just Built", style={'font-weight': 'bold', 'margin':'0'}),
         # html.Button('Yup!', id='select-model-button', className=''),
         html.Div(id='select-model-radio', children=[
             html.Div(className='container', children=[
@@ -60,7 +60,7 @@ layout = html.Div(className = 'row', children =[
                         value='rate',
                         style={'width':'300px'}
                 ), 
-                html.Button('Let\'s do this', id='popup-cards-button', className=''),
+                html.Button('Let\'s do this', id='popup-cards-button', className='btn btn-outline-dark'),
             ]),
         ]),
     ]),
@@ -118,7 +118,7 @@ def technique_options(value):
                 ]),
 
                 html.Div(className='row', children=[
-                    html.Button('Build Model', id='model-button-exisiting-user', className=''),
+                    html.Button('Build Model', id='model-button-exisiting-user', className='btn btn-outline-dark'),
                     dcc.Loading(id="loading-model", children=[html.Div(id="loading-model-output")], type="default"),
                 ]),
                 html.Div(className='row', children=[
@@ -128,7 +128,7 @@ def technique_options(value):
         else:
             return html.Div([
                 html.Div(className='row', children=[
-                    html.Button('Build Model', id='model-button-exisiting-user', className='btn btn-outline-primary'),
+                    html.Button('Build Model', id='model-button-exisiting-user', className='btn btn-outline-dark'),
                     dcc.Loading(id="loading-model", children=[html.Div(id="loading-model-output")], type="default"),
                 ]),
                 html.Div(className='row', children=[
@@ -413,8 +413,8 @@ def show_selected_card(n_clicks, value, data):
 
         if value == 'rate':
             # prediciton section
-            return html.Div(className='container padded', style={'background':'white'}, children = [
-                html.H2(className='', children = "Rate A Beer"),
+            return html.Div(className='container-outlined padded', style={'background':'white'}, children = [
+                html.H2("Rate A Beer", style={'font-weight': 'bold', 'margin':'0'}),
                 html.Div(className='container', children=[
                     html.H6([
                             """
@@ -432,7 +432,7 @@ def show_selected_card(n_clicks, value, data):
                         ]),
                     ]),
                     html.Div(className='row', children=[
-                        html.Button('Predict', id='prediction-button-exisiting-user', className='btn btn-outline-primary')
+                        html.Button('Predict', id='prediction-button-exisiting-user', className='btn btn-warning', style={'width':'10rem'})
                     ]),
                     html.Div(className='row', children=[
                         html.Div(id='prediction-results-exisiting-user', style={'text-align':'center'}),
@@ -442,8 +442,8 @@ def show_selected_card(n_clicks, value, data):
         
         elif value == 'rank':
             # ranking section
-            return html.Div(className='container padded', style={'background':'white'}, children = [
-                    html.H2(className='', children = "Rank My Beers"),
+            return html.Div(className='container-outlined padded', style={'background':'white'}, children = [
+                    html.H2("Rank My Beers", style={'font-weight': 'bold', 'margin':'0'}),
                     html.Div(className='container', children=[
                         html.H6(className='', children = [
                                 """
@@ -461,7 +461,7 @@ def show_selected_card(n_clicks, value, data):
                             ]),
                         ]),
                         html.Div(className='row', children=[
-                            html.Button('Rank', id='ranking-button-exisiting-user', className='btn btn-outline-primary')
+                            html.Button('Rank', id='ranking-button-exisiting-user', className='btn btn-warning', style={'width':'10rem'})
                         ]),
                         html.Div(className='row', children=[
                             html.Div(id='ranking-results-exisiting-user', style={'text-align':'center'}),
@@ -471,8 +471,8 @@ def show_selected_card(n_clicks, value, data):
 
         elif value == 'suggest':
             # suggestion section
-            return html.Div(className='container padded', style={'background':'white'}, children = [
-                    html.H2(className='', children = "Suggest a Beer"),
+            return html.Div(className='container-outlined padded', style={'background':'white'}, children = [
+                    html.H2("Suggest a Beer", style={'font-weight': 'bold', 'margin':'0'}),
                     html.Div(className='container', children=[
                         html.H6(
                                 """
@@ -480,7 +480,7 @@ def show_selected_card(n_clicks, value, data):
                                 """
                         ),
                         html.Div(className='row', children=[
-                            html.Button('Suggest', id='suggestion-button-exisiting-user', className='btn btn-outline-primary')
+                            html.Button('Suggest', id='suggestion-button-exisiting-user', className='btn btn-warning', style={'width':'10rem'})
                         ]),
                         html.Div(className='row', children=[
                             html.Div(id='suggestion-results-exisiting-user', style={'text-align':'center'}),
