@@ -339,7 +339,9 @@ def suggest_beers(n_clicks):
 
         elif feature_selection == 'cat-encoding':
             df = import_table(db_path, query = "SELECT beer_name, beer_description, ABV, IBU, global_rating FROM prepped_data")
+            descriptions = df[['beer_name', 'beer_description']]
             df = df.groupby('beer_name').mean().reset_index()
+            df = pd.merge(df, descriptions, on='beer_name')
             beer_df = cat_encoding(df, 'beer_description')
             beer_list = beer_df['beer_name']
             beer_df = beer_df.drop('beer_name', axis=1)
@@ -451,7 +453,7 @@ def show_selected_card(n_clicks, value, data):
                                     id = 'ranking-beer-selection-dropdown-exisiting-user',
                                     options = data,
                                     multi = True,
-                                    style={'width':'500px'}
+                                    # style={'width':'500px'}
                                 )
                             ]),
                         ]),
