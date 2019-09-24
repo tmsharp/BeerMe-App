@@ -11,9 +11,9 @@ from util import *
 
 layout = html.Div(className = 'row', children =[
 
-    dcc.Store(id="session", storage_type='session',
-                data=beer_options()
-            ),
+    # dcc.Store(id="session", storage_type='session',
+    #             data=get_beers()
+    #         ),
     
     # username section
     html.Div(className='container padded', style={'background':'white'}, children=[
@@ -395,7 +395,6 @@ def show_model_radio(n_clicks):
 def show_selected_card(n_clicks, value, data):
     if n_clicks != None:
 
-        beer_options = data
 
         if value == 'rate':
             # prediciton section
@@ -411,7 +410,7 @@ def show_selected_card(n_clicks, value, data):
                         html.Div(className='col-lg-5 m-4', children=[
                             dcc.Dropdown(
                                 id = 'beer-selection-dropdown-existing-user',
-                                options = data,
+                                options = beer_options(),
                                 multi = False,
                                 style = {'width': '500px'}
                             )
@@ -439,7 +438,7 @@ def show_selected_card(n_clicks, value, data):
                         html.Div(className='col-lg-5 m-4', children=[
                             dcc.Dropdown(
                                 id = 'ranking-beer-selection-dropdown-existing-user',
-                                options = data,
+                                options = beer_options(),
                                 multi = True,
                                 style = {'width': '500px'}
                             )
