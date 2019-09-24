@@ -368,7 +368,10 @@ def suggest_beers(n_clicks):
 
         beer_df['predictions'] = predictions
         beer_df['beer_name'] = beer_list
-        beer_df = beer_df[beer_df['predictions'] > 4.0]
+        if len(beer_df) > 10:
+            beer_df = beer_df.sort_values('predictions').iloc[0:10]
+        else:
+            pass
 
         ind = np.random.randint(0, len(beer_df))
         prediction = beer_df.iloc[ind,]['predictions']
