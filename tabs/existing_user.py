@@ -18,7 +18,7 @@ layout = html.Div(className = 'row', children =[
     # username section
     html.Div(className='container padded', style={'background':'white'}, children=[
         html.H3("Let's Build a Model"),
-        html.Div(className='col-lg-5', children=[
+        html.Div(className='container', children=[
             html.H4("Select Your Username"),
             dcc.Dropdown(
                 id = 'username-selection-dropdown-exisiting-user',
@@ -42,7 +42,7 @@ layout = html.Div(className = 'row', children =[
     
     ]),
 
-    html.Div(className='container', style={'margin-top':'50px', 'background':'white'}, children=[
+    html.Div(className='container padded', style={'margin-top':'50px', 'background':'white'}, children=[
         html.H3("Ready to Use that Model we just Built?"),
         html.Button('Yup!', id='select-model-button', className=''),
         html.Div(id='select-model-radio')
@@ -101,7 +101,7 @@ def technique_options(value):
                 ]),
 
                 html.Div(className='row', children=[
-                    html.Button('Build Model', id='model-button-exisiting-user', className='btn btn-outline-primary'),
+                    html.Button('Build Model', id='model-button-exisiting-user', className=''),
                     dcc.Loading(id="loading-model", children=[html.Div(id="loading-model-output")], type="default"),
                 ]),
                 html.Div(className='row', children=[
@@ -358,7 +358,7 @@ def suggest_beers(n_clicks):
                 [Input('select-model-button', 'n_clicks')])
 def show_model_radio(n_clicks):
     if n_clicks != None:
-        return html.Div([
+        return html.Div(className='container', children=[
             html.H5("""How do you want to put that model to work? It can be used to rate a specific beer you're interested in,
                         rank a list of beers that you're trying to choose between, or we can just suggest a brand new beer 
                         that you may never even heard of!"""),
@@ -369,7 +369,8 @@ def show_model_radio(n_clicks):
                         {'label': 'Rank some Beers', 'value': 'rank'},
                         {'label': 'Suggest a Beer', 'value': 'suggest'}
                     ],
-                    value='rate'
+                    value='rate',
+                    style={'width':'300px'}
             ), 
             html.Button('Let\'s do this', id='popup-cards-button', className=''),
         ])
@@ -382,14 +383,12 @@ def show_model_radio(n_clicks):
 def show_selected_card(n_clicks, value, data):
     if n_clicks != None:
 
-        beer_options = data
-
         if value == 'rate':
             # prediciton section
-            return html.Div(className='container', style={'background':'white'}, children = [
-                html.Div(className='', children = [
-                    html.H2(className='', children = "Rate A Beer"),
-                    html.Div(className='', children = [
+            return html.Div(className='container padded', style={'background':'white'}, children = [
+                html.H2(className='', children = "Rate A Beer"),
+                html.Div(className='container', children=[
+                    html.Div([
                             """
                             Select a beer and our algorithm will predict your rating!
                             """
@@ -407,52 +406,54 @@ def show_selected_card(n_clicks, value, data):
                         html.Button('Predict', id='prediction-button-exisiting-user', className='btn btn-outline-primary')
                     ]),
                     html.Div(className='row', children=[
-                        html.Div(id='prediction-results-exisiting-user')
+                        html.Div(id='prediction-results-exisiting-user', style={'text-align':'center'}),
                     ]),
                 ]),
-            ]),
+            ])
+        
         elif value == 'rank':
             # ranking section
-            return html.Div(className='container', style={'background':'white'}, children = [
-                html.Div(className='', children = [
+            return html.Div(className='container padded', style={'background':'white'}, children = [
                     html.H2(className='', children = "Rank My Beers"),
-                    html.Div(className='', children = [
-                            """
-                            Select a few beers and will tell you which one you'll like best!
-                            """
-                    ]),
-                    html.Div(className='row', children=[
-                        html.Div(className='col-lg-5 m-4', children=[
-                            dcc.Dropdown(
-                                id = 'ranking-beer-selection-dropdown-exisiting-user',
-                                options = data,
-                                multi = True
-                            )
+                    html.Div(className='container', children=[
+                        html.Div(className='', children = [
+                                """
+                                Select a few beers and will tell you which one you'll like best!
+                                """
+                        ]),
+                        html.Div(className='row', children=[
+                            html.Div(className='col-lg-5 m-4', children=[
+                                dcc.Dropdown(
+                                    id = 'ranking-beer-selection-dropdown-exisiting-user',
+                                    options = data,
+                                    multi = True
+                                )
+                            ]),
+                        ]),
+                        html.Div(className='row', children=[
+                            html.Button('Rank', id='ranking-button-exisiting-user', className='btn btn-outline-primary')
+                        ]),
+                        html.Div(className='row', children=[
+                            html.Div(id='ranking-results-exisiting-user', style={'text-align':'center'}),
                         ]),
                     ]),
-                    html.Div(className='row', children=[
-                        html.Button('Rank', id='ranking-button-exisiting-user', className='btn btn-outline-primary')
-                    ]),
-                    html.Div(className='row', children=[
-                        html.Div(id='ranking-results-exisiting-user')
-                    ]),
                 ]),
-            ]),
+
         elif value == 'suggest':
             # suggestion section
-            return html.Div(className='container', style={'background':'white'}, children = [
-                html.Div(className='', children = [
+            return html.Div(className='container padded', style={'background':'white'}, children = [
                     html.H2(className='', children = "Suggest a Beer"),
-                    html.Div(className='', children = [
-                            """
-                            Let us suggest a new beer for you!
-                            """
+                    html.Div(className='container', children=[
+                        html.Div(className='', children = [
+                                """
+                                Let us suggest a new beer for you!
+                                """
+                        ]),
+                        html.Div(className='row', children=[
+                            html.Button('Suggest', id='suggestion-button-exisiting-user', className='btn btn-outline-primary')
+                        ]),
+                        html.Div(className='row', children=[
+                            html.Div(id='suggestion-results-exisiting-user', style={'text-align':'center'}),
+                        ]),
                     ]),
-                    html.Div(className='row', children=[
-                        html.Button('Suggest', id='suggestion-button-exisiting-user', className='btn btn-outline-primary')
-                    ]),
-                    html.Div(className='row', children=[
-                        html.Div(id='suggestion-results-exisiting-user')
-                    ]),
-                ]),
-            ]),
+                ])
