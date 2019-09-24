@@ -8,19 +8,19 @@ from dash.dependencies import Input, Output, State
 import numpy as np
 
 from app import app, server
-from tabs import content_based_filtering, collab_filt, hybrid
+from tabs import existing_user
 from util import *
 
 # Layout
-app.layout = html.Div([
+app.layout = html.Div(className="row", children=[
 
     # css
     html.Link(href="app/assets/favicon.ico", rel="icon"),
-    html.Link(rel="stylesheet", href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css",
-              integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm",
-              crossOrigin="anonymous"),
-    html.Link(href='/assets/css/main.css', rel='stylesheet'),
-    html.Link(href='/assets/css/loadwheel.css', rel='stylesheet'),
+    # html.Link(rel="stylesheet", href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css",
+    #           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm",
+    #           crossOrigin="anonymous"),
+    # html.Link(href='/assets/css/main.css', rel='stylesheet'),
+    # html.Link(href='/assets/css/loadwheel.css', rel='stylesheet'),
     html.Link(href='/assets/css/normalize.css', rel='stylesheet'),
     html.Link(href='/assets/css/skeleton.css', rel='stylesheet'),
     html.Link(href='/assets/css/codepen.css', rel='stylesheet'),
@@ -33,34 +33,38 @@ app.layout = html.Div([
     html.Div(className='row', style={'background':'#fcc203', 'padding':'10px'}, children = [
         html.Div(style={'display': 'flex'}, children = [
             html.H2('BeerMe', className = "tagline-400", style={'padding-right': '10px'}),
-            html.H4('A Recommendation System for Untappd', className="verticalLine-2 tagline")
+            html.Div(style={'margin-top':'10px'}, children=[
+                html.H4('A Recommendation System for Untappd', className="verticalLine-2 tagline")
+            ])
         ])
     ]),
     
     # tabs
-    dcc.Tabs(id="tabs", value='cbf', children=[
-        dcc.Tab(label='Content Based Filtering', value='cbf'),
-        dcc.Tab(label='Collaborative Filtering', value='collabfilt'),
-        dcc.Tab(label='Hybrid', value='hybrid'),
-    ]),
+    # dcc.Tabs(id="tabs", value='cbf', children=[
+    #     dcc.Tab(label='Existing User', value='existing-user'),
+    #     dcc.Tab(label='Collaborative Filtering', value='collabfilt'),
+    #     dcc.Tab(label='Hybrid', value='hybrid'),
+    # ]),
 
     # page content
-    html.Div(id='page-content')
+    html.Div(id='page-content', style={'margin-top':'50px', 'margin-bottom':'50px'})
 
 ])
 
 
 ### callbacks for page content and url 
 # output url for clicking tabs
-@app.callback(Output('url', 'pathname'),
-              [Input('tabs','value')])
-def tab_selection(tab):
-    if tab == 'collabfilt':
-        return '/collabfilt'
-    elif tab == 'cbf':
-        return '/cbf'
-    elif tab == 'hybrid':
-        return '/hybrid'
+# @app.callback(Output('url', 'pathname'),
+#               [Input('tabs','value')])
+# def tab_selection(tab):
+#     if tab == 'collabfilt':
+#         return '/collabfilt'
+#     elif tab == 'existing-user':
+#         return '/existing-user'
+#     elif tab == 'hybrid':
+#         return '/hybrid'
+#     else:
+#         return '/'
 
 
 # display each app's content based on url (which is updated by tab clicks)
@@ -72,7 +76,7 @@ def display_page(pathname):
     elif pathname == '/hybrid':
         return hybrid.layout
     else:
-        return content_based_filtering.layout
+        return existing_user.layout
 
 
 ## run
