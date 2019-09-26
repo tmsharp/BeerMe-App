@@ -91,7 +91,7 @@ def display_beer_loader(n_clicks, value):
 @app.callback(Output('model-setup', 'children'),
                 [Input('technique-dropdown', 'value')])
 def technique_options(value):
-        if value != 'cf':
+        if value == 'cbf':
             return html.Div([
                 # feature selection
                 html.Div(className='col-lg-5', children=[
@@ -122,9 +122,44 @@ def technique_options(value):
                     dcc.Loading(id="loading-model", children=[html.Div(id="loading-model-output")], type="default"),
                 ]),
                 html.Div(className='row', children=[
+                    html.Div(id='model-results-exisiting-user'),
+                    html.Div(id='dummy-div')
+                ])
+            ])
+
+        elif value == 'hybrid':
+            return html.Div([
+                # feature selection
+                html.Div(className='col-lg-5', children=[
+                        html.H4("Select Which Feature Selection You'd Like to Use"),
+                        dcc.Dropdown(
+                            id = 'feature-selection-dropdown-exisiting-user',
+                            options = [{'label': 'Simple', 'value': 'simple'},
+                                        {'label': 'Categorical Encoding of Beer Description', 'value': 'cat-encoding'},
+                                        {'label': 'Count Vectorizer of Beer Description', 'value': 'count-vect'},
+                                        {'label': 'TFIDF Vectorizer of Beer Description', 'value': 'tfidf-vect'}],
+                            multi = False
+                        )
+                ]),
+                # alg selection
+                html.Div(className='col-lg-5', children=[
+                        html.H4("Select Which Model You'd Like to Use"),
+                        dcc.Dropdown(
+                            id = 'model-selection-dropdown-exisiting-user',
+                            options = [{'label': 'Lasso', 'value': 'Lasso'}],
+                            multi = False
+                        )
+                ]),
+
+                html.Div(className='row', children=[
+                    html.Button('Build Model', id='model-button-exisiting-user', className='btn btn-outline-dark'),
+                    dcc.Loading(id="loading-model", children=[html.Div(id="loading-model-output")], type="default"),
+                ]),
+                html.Div(className='row', children=[
                     html.Div(id='model-results-exisiting-user')
                 ])
             ])
+
         else:
             return html.Div([
                 html.Div(className='row', children=[
@@ -136,6 +171,32 @@ def technique_options(value):
                 ])
             ])
 
+@app.callback(Output('dummy-div', 'children'),
+                [Input('model-button-exisiting-user', 'n_clicks'),
+                Input('technique-dropdown', 'value'),
+                Input('username-selection-dropdown-exisiting-user', 'value')])
+def build_model(n_clicks, technique, user_of_interest):
+    
+    print(technique)
+    
+    if technique == 'cf':
+        print("...")
+        query = "SELECT user_rating, beer_name, username FROM prepped_data"
+        df = import_table(db_path, query, remove_dups=False)
+        mae, quarter, half = collaborative_filtering(df, user_of_interest)
+        print("HEEERRREE")
+        
+        # structure html and return 
+        children = [html.Div("We have created a predictive model based on your taste preferences".format(quarter, half, mae),
+                            style={'font-size':'large', 'font-weight':'bold'}),
+                    html.Br(),
+                    html.Div("Full analysis below:", style={'text-align':'center', 'font-weight':'bold'}),
+                    html.Div("Accuracy within 0.25 stars: {:.2f}%".format(quarter), style={'text-align':'center', 'font-size':'small'}),
+                    html.Div("Accuracy within 0.50 stars: {:.2f}%".format(half), style={'text-align':'center', 'font-size':'small'}),
+                    html.Div("Mean Absolute Error (MAE): {:.2f}".format(mae), style={'text-align':'center', 'font-size':'small'})]
+        ret_html = html.Div(children=children)
+        print(ret_html)
+        return ret_html
 
 @app.callback(Output('model-results-exisiting-user', 'children'),
                 [Input('model-button-exisiting-user', 'n_clicks')],
@@ -146,9 +207,7 @@ def technique_options(value):
 def build_model(n_clicks, user_of_interest, technique, feature_selection, alg):
 
     if n_clicks != None:
-
-        print(technique)
-
+        
         if technique == 'cbf':
         
             # feature prep
