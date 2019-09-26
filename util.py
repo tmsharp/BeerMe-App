@@ -301,8 +301,8 @@ def cbf(user_df, algorithm, target, impute_na_mean=False, remove_all_outliers=Fa
     elif algorithm == 'ElasticNet':
         from sklearn.linear_model import ElasticNet
         model = ElasticNet(fit_intercept=True, normalize=True, random_state=rand_state)
-        param_space = {'alpha': np.linspace(0.01, 1.0),
-                       'l1_ratio': np.linspace(0.01, 1.0),}
+        param_space = {'alpha': np.linspace(0.1, 1.0),
+                       'l1_ratio': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],}
         
     else:
         raise ValueError("Please input a correct algorithm")
@@ -330,8 +330,10 @@ def cbf(user_df, algorithm, target, impute_na_mean=False, remove_all_outliers=Fa
     # fit best model over all data 
     best_model.fit(user_df[features], user_df[target])
     best_params = {}
+    print(param_space)
     for key in param_space.keys():
         best_params[key] = best_model.get_params()[key]
+    print(best_params)
     
     return best_model, best_params, mae, quarter_error_perc, half_error_perc
 
@@ -389,9 +391,8 @@ def run_hybrid(df, user_of_interest, target):
     print("TARGET ", target)
     df = COSINE_STEP(df, user_of_interest)
 
-    min_ppu_list = [0, 50, 100, 250, 500, 750, 1000]
-    n_users_list = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 
-                    55, 60, 65, 70, 75, 80, 85, 100, len(df['username'].unique())-1]
+    min_ppu_list = [0, 50, 100, 250, 500]
+    n_users_list = [5, 10, 15, 20, 30, 40, 50]
 
     mae_list = []
     quarter_abs_error_list = []

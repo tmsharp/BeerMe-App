@@ -140,51 +140,117 @@ def technique_options(value):
 @app.callback(Output('model-results-exisiting-user', 'children'),
                 [Input('model-button-exisiting-user', 'n_clicks')],
                 [State('username-selection-dropdown-exisiting-user', 'value'),
+                 State('technique-dropdown', 'value'),
                  State('feature-selection-dropdown-exisiting-user', 'value'),
                  State('model-selection-dropdown-exisiting-user', 'value')])
-def build_model(n_clicks, user_of_interest, feature_selection, alg):
+def build_model(n_clicks, user_of_interest, technique, feature_selection, alg):
 
     if n_clicks != None:
-       
-        # feature prep
-        if feature_selection == 'simple':
-            df = import_table(db_path, query = "SELECT username, beer_description, ABV, IBU, global_rating, user_rating FROM prepped_data WHERE username = '{}'".format(user_of_interest))
-            user_df = df[df['username']==user_of_interest].drop(['username', 'beer_description'], axis=1, inplace=False)
-        elif feature_selection == 'cat-encoding':
-            df = import_table(db_path, query = "SELECT username, beer_description, ABV, IBU, global_rating, user_rating FROM prepped_data")
-            df = cat_encoding(df, 'beer_description')
-            user_df = df[df['username'] == user_of_interest]
-            user_df.drop(['username'], axis=1, inplace=True)
-        elif feature_selection == 'count-vect':
-            df = import_table(db_path, query = "SELECT username, beer_description, ABV, IBU, global_rating, user_rating FROM prepped_data")
-            df = count_vectorizer(df, 'beer_description')
-            user_df = df[df['username'] == user_of_interest]
-            user_df.drop(['username'], axis=1, inplace=True)
-        elif feature_selection == 'tfidf-vect':
-            df = import_table(db_path, query = "SELECT username, beer_description, ABV, IBU, global_rating, user_rating FROM prepped_data")
-            df = tfidf_vectorizer(df, 'beer_description')
-            user_df = df[df['username'] == user_of_interest]
-            user_df.drop(['username'], axis=1, inplace=True)
 
-        model, best_params, mae, quarter, half = cbf(user_df, alg, 'user_rating', impute_na_mean=True, remove_all_outliers=True)
+        print(technique)
 
-        d={}
-        d['model'] = model
-        d['feature_selection'] = feature_selection
+        if technique == 'cbf':
+        
+            # feature prep
+            if feature_selection == 'simple':
+                df = import_table(db_path, query = "SELECT username, beer_description, ABV, IBU, global_rating, user_rating FROM prepped_data WHERE username = '{}'".format(user_of_interest))
+                user_df = df[df['username']==user_of_interest].drop(['username', 'beer_description'], axis=1, inplace=False)
+            elif feature_selection == 'cat-encoding':
+                df = import_table(db_path, query = "SELECT username, beer_description, ABV, IBU, global_rating, user_rating FROM prepped_data")
+                df = cat_encoding(df, 'beer_description')
+                user_df = df[df['username'] == user_of_interest]
+                user_df.drop(['username'], axis=1, inplace=True)
+            elif feature_selection == 'count-vect':
+                df = import_table(db_path, query = "SELECT username, beer_description, ABV, IBU, global_rating, user_rating FROM prepped_data")
+                df = count_vectorizer(df, 'beer_description')
+                user_df = df[df['username'] == user_of_interest]
+                user_df.drop(['username'], axis=1, inplace=True)
+            elif feature_selection == 'tfidf-vect':
+                df = import_table(db_path, query = "SELECT username, beer_description, ABV, IBU, global_rating, user_rating FROM prepped_data")
+                df = tfidf_vectorizer(df, 'beer_description')
+                user_df = df[df['username'] == user_of_interest]
+                user_df.drop(['username'], axis=1, inplace=True)
 
-        with open('exisiting-user-model.pkl', 'wb') as file:
-            pickle.dump(d, file)
+            model, best_params, mae, quarter, half = cbf(user_df, alg, 'user_rating', impute_na_mean=True, remove_all_outliers=True)
 
-        # structure html and return 
-        children = [html.Div("We have created a predictive model based on your taste preferences".format(quarter, half, mae),
-                            style={'font-size':'large', 'font-weight':'bold'}),
-                    html.Br(),
-                    html.Div("Full analysis below:", style={'text-align':'center', 'font-weight':'bold'}),
-                    html.Div("Accuracy within 0.25 stars: {:.2f}%".format(quarter), style={'text-align':'center', 'font-size':'small'}),
-                    html.Div("Accuracy within 0.50 stars: {:.2f}%".format(half), style={'text-align':'center', 'font-size':'small'}),
-                    html.Div("Mean Absolute Error (MAE): {:.2f}".format(mae), style={'text-align':'center', 'font-size':'small'}),
-                    html.Div("Best Parameters: {}".format(best_params), style={'text-align':'center', 'font-size':'small'})]
-        ret_html = html.Div(children=children)
+            d={}
+            d['model'] = model
+            d['feature_selection'] = feature_selection
+
+            with open('exisiting-user-model.pkl', 'wb') as file:
+                pickle.dump(d, file)
+            
+            # structure html and return 
+            children = [html.Div("We have created a predictive model based on your taste preferences".format(quarter, half, mae),
+                                style={'font-size':'large', 'font-weight':'bold'}),
+                        html.Br(),
+                        html.Div("Full analysis below:", style={'text-align':'center', 'font-weight':'bold'}),
+                        html.Div("Accuracy within 0.25 stars: {:.2f}%".format(quarter), style={'text-align':'center', 'font-size':'small'}),
+                        html.Div("Accuracy within 0.50 stars: {:.2f}%".format(half), style={'text-align':'center', 'font-size':'small'}),
+                        html.Div("Mean Absolute Error (MAE): {:.2f}".format(mae), style={'text-align':'center', 'font-size':'small'}),
+                        html.Div("Best Parameters: {}".format(best_params), style={'text-align':'center', 'font-size':'small'})]
+            ret_html = html.Div(children=children)
+
+        elif technique=='cf':
+            print("HERE")
+            query = "SELECT user_rating, beer_name, username FROM prepped_data"
+            df = import_table(db_path, query, remove_dups=False)
+            mae, quarter, half = collaborative_filtering(df, user_of_interest)
+            print("HEEERRREE")
+            
+            # structure html and return 
+            children = [html.Div("We have created a predictive model based on your taste preferences".format(quarter, half, mae),
+                                style={'font-size':'large', 'font-weight':'bold'}),
+                        html.Br(),
+                        html.Div("Full analysis below:", style={'text-align':'center', 'font-weight':'bold'}),
+                        html.Div("Accuracy within 0.25 stars: {:.2f}%".format(quarter), style={'text-align':'center', 'font-size':'small'}),
+                        html.Div("Accuracy within 0.50 stars: {:.2f}%".format(half), style={'text-align':'center', 'font-size':'small'}),
+                        html.Div("Mean Absolute Error (MAE): {:.2f}".format(mae), style={'text-align':'center', 'font-size':'small'})]
+            ret_html = html.Div(children=children)
+
+        else:
+            df = import_table(db_path, query = "SELECT username, beer_name, beer_description, ABV, IBU, global_rating, user_rating FROM prepped_data")
+    
+            # feature prep
+            if feature_selection == 'simple':
+                hybrid_df = df.drop(['beer_description'], axis=1, inplace=False)
+            
+            elif feature_selection == 'cat-encoding':
+                df = import_table(db_path, query = "SELECT username, user_rating, beer_name, beer_description, ABV, IBU, global_rating FROM prepped_data")
+                hybrid_df = cat_encoding(df, 'beer_description')
+            elif feature_selection == 'count-vect':
+                df = import_table(db_path, query = "SELECT username, user_rating, beer_name, beer_description, ABV, IBU, global_rating FROM prepped_data")
+                hybrid_df = count_vectorizer(df, 'beer_description')
+            elif feature_selection == 'tfidf-vect':
+                df = import_table(db_path, query = "SELECT username, user_rating, beer_name, beer_description, ABV, IBU, global_rating FROM prepped_data")
+                hybrid_df = count_vectorizer(df, 'beer_description')
+
+            model_list, mae_list, quarter_list, half_list = run_hybrid(hybrid_df, user_of_interest, 'user_rating')
+
+            mae = min(i for i in mae_list if i > 0)
+            ind = mae_list.index(mae)
+
+            model = model_list[ind]
+            quarter = quarter_list[ind]
+            half = half_list[ind]
+
+            d={}
+            d['model'] = model
+            d['feature_selection'] = feature_selection
+
+            with open('hybrid-model.pkl', 'wb') as file:
+                pickle.dump(d, file)
+
+            # structure html and return 
+            children = [html.Div("We have created a predictive model based on your taste preferences".format(quarter, half, mae),
+                                style={'font-size':'large', 'font-weight':'bold'}),
+                        html.Br(),
+                        html.Div("Full analysis below:", style={'text-align':'center', 'font-weight':'bold'}),
+                        html.Div("Accuracy within 0.25 stars: {:.2f}%".format(quarter), style={'text-align':'center', 'font-size':'small'}),
+                        html.Div("Accuracy within 0.50 stars: {:.2f}%".format(half), style={'text-align':'center', 'font-size':'small'}),
+                        html.Div("Mean Absolute Error (MAE): {:.2f}".format(mae), style={'text-align':'center', 'font-size':'small'})]
+            ret_html = html.Div(children=children)
+        
         return ret_html
 
 @app.callback(Output('explanation-container', 'style'),
