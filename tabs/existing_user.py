@@ -382,7 +382,10 @@ def predict_beer_rating(n_clicks, beer):
             beer_df['global_rating'] = beer_df['global_rating'].mean()
             beer_df = beer_df[~beer_df.duplicated()]
             prediction = model.predict(beer_df)
-
+            if prediction > 5.0:
+                prediction = 5.0
+            elif prediction < 0.0:
+                prediction = 0.0
         
         ret_html = html.Div("We predict that your rating for this beer will be {:.2f}".format(prediction[0]),
                              style={'font-size':'large', 'font-weight':'bold'})
@@ -443,6 +446,11 @@ def rank_beers(n_clicks, beers):
             beer_df = beer_df[~beer_df.duplicated()]
 
             predictions = model.predict(beer_df.drop('beer_name', axis=1))
+            for prediction in predictions:
+                if prediction > 5.0:
+                    prediction = 5.0
+                elif prediction < 0.0:
+                    prediction = 0.0
             beer_df['predictions'] = predictions
 
         beer_df.sort_values('predictions', inplace=True, ascending=False)
@@ -520,6 +528,10 @@ def suggest_beers(n_clicks):
 
         ind = np.random.randint(0, len(beer_df))
         prediction = beer_df.iloc[ind,]['predictions']
+        if prediction > 5.0:
+            prediction = 5.0
+        elif prediction < 0.0:
+            prediction = 0.0
         beer_name = beer_df.iloc[ind,]['beer_name']
 
         ret_html = html.Div("We think your next one should be {} (rating = {:.2f})".format(beer_name, prediction),
