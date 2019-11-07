@@ -9,6 +9,7 @@ scratch.py
 /notebooks/old
 *.html
 debug.log
+.pkl
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
